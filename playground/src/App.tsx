@@ -2,6 +2,7 @@ import { Table2, Braces, Layers3, ArrowUpRight } from 'lucide-react'
 import { TeamTable } from './Components/TeamTable.tsx'
 import { usePlaygroundLogic } from './Hooks/usePlaygroundLogic.ts'
 import { playgroundMessages } from './config/playground.config.ts'
+import { version } from '../../package.json'
 
 export function App() {
     const { state, handler } = usePlaygroundLogic()
@@ -154,7 +155,7 @@ export function App() {
                             aria-hidden="true"
                             className="size-1.5 rounded-full bg-rentner-accent"
                         />
-                        {playgroundMessages[state.locale].demo} · v0.1.0
+                        {playgroundMessages[state.locale].demo} · v{version}
                     </span>
                 </footer>
             </div>

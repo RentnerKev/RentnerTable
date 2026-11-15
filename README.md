@@ -5,6 +5,8 @@
 <p align="center">
     <a href="https://github.com/RentnerKev/RentnerTable/actions/workflows/ci.yml"><img src="https://github.com/RentnerKev/RentnerTable/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
     <a href="https://github.com/RentnerKev/RentnerTable/actions/workflows/codeql.yml"><img src="https://github.com/RentnerKev/RentnerTable/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"></a>
+    <a href="https://www.npmjs.com/package/@rentnerkev/table"><img src="https://img.shields.io/npm/v/@rentnerkev/table" alt="npm version"></a>
+    <a href="https://www.npmjs.com/package/@rentnerkev/table"><img src="https://img.shields.io/npm/dm/@rentnerkev/table" alt="npm downloads"></a>
     <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-61dafb" alt="React 19"></a>
     <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind_CSS-4-38bdf8" alt="Tailwind CSS 4"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
@@ -16,18 +18,13 @@ Accessible, typed React tables built with TanStack Table 9 and shared RentnerKev
 
 Requires React 19, React DOM 19, and Tailwind CSS 4. Components use the existing RentnerKev input, select, menu and calendar packages.
 
-**Before the first npm release**, build an installable archive from this checkout:
-
 ```bash
-git clone https://github.com/RentnerKev/RentnerTable.git
-cd RentnerTable
-bun install --frozen-lockfile
-bun pm pack
+npm install @rentnerkev/table
+# or with Bun
+bun add @rentnerkev/table
 ```
 
-Install the resulting `rentnerkev-table-0.1.0.tgz` in your application with `bun add /path/to/rentnerkev-table-0.1.0.tgz` or `npm install /path/to/rentnerkev-table-0.1.0.tgz`. The archive contains compiled ESM, declarations, styles and usage documentation.
-
-After the first npm release, use `bun add @rentnerkev/table` or `npm install @rentnerkev/table`.
+The package contains compiled ESM, declarations, styles and usage documentation.
 
 Import the package styles after Tailwind in your app stylesheet:
 
@@ -155,7 +152,7 @@ Dependabot checks both Bun packages and GitHub Actions daily. Verified minor/pat
 
 Publishing a stable GitHub release named `vMAJOR.MINOR.PATCH` triggers exact-tag verification, tag-derived package versioning and npm publication with provenance. A separate workflow generates release notes and uploads the project banner. Pushing commits or tags alone does not publish a package.
 
-The first npm publication and Trusted Publisher setup still need to be completed for `@rentnerkev/table`; repository setup does not register an npm publisher. See [automation setup](./.github/AUTOMATION.md) for the exact repository settings, update policy and publishing prerequisites.
+The npm Trusted Publisher authorizes GitHub owner `RentnerKev`, repository `RentnerTable` and workflow filename `npm-publish.yml`. Future releases use OIDC rather than a stored npm token. See [automation setup](./.github/AUTOMATION.md) for the repository settings, update policy and release procedure.
 
 ## License
 

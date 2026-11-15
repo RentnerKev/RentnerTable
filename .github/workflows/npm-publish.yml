@@ -72,11 +72,19 @@ jobs:
             - name: Verify exact-source package
               working-directory: source
               run: bun run verify
-            - name: Inspect package
+            - name: Pack verified release artifact
               working-directory: source
-              run: npm pack --dry-run --ignore-scripts
+              run: npm pack --ignore-scripts
+            - name: Retain verified npm archive
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: npm-package-${{ steps.release.outputs.tag }}-${{ github.run_attempt }}
+                  path: source/rentnerkev-table-${{ steps.release.outputs.version }}.tgz
+                  if-no-files-found: error
+                  retention-days: 14
             - name: Publish immutable verified artifact
               working-directory: source
               env:
                   GH_TOKEN: ${{ github.token }}
+                  NODE_AUTH_TOKEN: ''
               run: bun "$GITHUB_WORKSPACE/automation/.github/scripts/release/publish.ts"

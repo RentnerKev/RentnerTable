@@ -18,13 +18,19 @@ Ordinary Dependabot auto-merge uses `GITHUB_TOKEN` and needs no personal token. 
 
 ## Stable npm releases
 
-The npm package has not been published yet. Repository setup does not create an npm Trusted Publisher. Complete the first publication under the RentnerKev scope, then configure npm Trusted Publisher with:
+The npm Trusted Publisher for `@rentnerkev/table` uses:
 
 - GitHub owner: `RentnerKev`
 - Repository: `RentnerTable`
 - Workflow filename: `npm-publish.yml`
 
+Allow direct `npm publish` for this connection so a published GitHub release needs no extra staged-package approval. Restrict traditional publishing to 2FA with tokens disallowed; OIDC remains available. A new publisher must validate within two days, so the bootstrap also verifies the workflow's OIDC identity before it is considered complete.
+
+For a release, create a published stable GitHub release targeting the desired main commit, for example `gh release create v0.0.2 --target main --title v0.0.2 --notes-file release-notes.md`. The version comes from the tag, so a separate committed version bump is optional. Wait for both Publish package and Release Changelog to finish successfully. The first release is `v0.0.1`.
+
 Publishing a stable GitHub release named `vMAJOR.MINOR.PATCH` triggers the publishing workflow. It validates repository and package identity, a stable release event, the exact tag commit and main ancestry. Trusted automation runs from main; builds run against the validated tag. The prepared build receives its version from the tag without rewriting committed source. Frozen installs, the complete verification suite, package inventory and SHA-512 integrity checks precede publication. Releases use short-lived OIDC credentials with provenance, without a stored npm token. A push or tag alone does not publish.
+
+The verified npm archive is retained as a workflow artifact for bootstrap and recovery. An already-published version must match the archive's exact integrity; recovery also verifies the configured OIDC publisher through npm's token-exchange endpoint, without logging or storing tokens. The initial publication creates the package using that same verified archive, because npm requires the package to exist before a publisher can be configured.
 
 The notes workflow generates Conventional Commit release notes, preserves authored notes outside its managed markers and uploads the [project release banner](./assets/release-banners/new-release-banner.png). The [README banner](../assets/readme/banner.png) uses the same artwork; the [saved ImageGen prompt](../assets/readme/banner.prompt.txt) records its RentnerMenu reference and intended edits. Existing assets are reused only when their SHA-256 digest matches. Existing npm versions are checked for exact integrity; collisions and channel rollback fail rather than overwriting published artifacts.
 

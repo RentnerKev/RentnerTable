@@ -3,7 +3,8 @@ import { repositoryPolicy } from '../lib/repository.ts'
 import { createHash } from 'node:crypto'
 import { readRegularFile } from '../lib/regularFile.ts'
 import { resolve, basename } from 'node:path'
-import { command, isMain, parseJson } from '../lib/runtime.ts'
+import { command, isMain, parseJson, requiredEnv } from '../lib/runtime.ts'
+import { verifyTrustedPublisher } from './trusted-publisher.ts'
 import { verifyPreparedCheckout } from './identity.ts'
 import type { PackageIdentity, PackedArtifact } from './Types/release.types.ts'
 import {
@@ -60,7 +61,12 @@ if (isMain(import.meta.url)) {
         (await lookupChannels(packageName)).latest,
         identity.version,
     )
-    if (!existing)
+    if (existing)
+        await verifyTrustedPublisher(packageName, {
+            requestUrl: requiredEnv('ACTIONS_ID_TOKEN_REQUEST_URL'),
+            requestToken: requiredEnv('ACTIONS_ID_TOKEN_REQUEST_TOKEN'),
+        })
+    else
         command('npm', [
             'publish',
             tarball,
