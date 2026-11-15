@@ -143,6 +143,16 @@ describe('reusable data table', () => {
         fireEvent.click(
             screen.getByRole('button', { name: 'Filters', exact: true }),
         )
+        const filters = screen.getByRole('region', { name: 'Filters' })
+        expect(
+            screen
+                .getByRole('button', { name: 'Filters', exact: true })
+                .getAttribute('aria-controls'),
+        ).toBe(filters.id)
+        expect(screen.getByRole('table').contains(filters)).toBe(false)
+        expect(
+            within(filters).getByRole('group', { name: 'Name' }),
+        ).toBeDefined()
         fireEvent.change(screen.getByRole('textbox', { name: 'Filter Name' }), {
             target: { value: 'Member 09' },
         })
@@ -152,6 +162,7 @@ describe('reusable data table', () => {
         expect(
             screen.queryByRole('textbox', { name: 'Filter Name' }),
         ).toBeNull()
+        expect(screen.queryByRole('region', { name: 'Filters' })).toBeNull()
         expect(rowNames()).toHaveLength(1)
     })
 

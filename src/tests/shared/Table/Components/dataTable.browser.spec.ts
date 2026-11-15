@@ -51,6 +51,60 @@ test('combines column filters and opens the date range filter', async ({
     await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
+test('lays out labeled filters in responsive rows outside the column grid', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 1200 })
+    await page.getByRole('button', { name: 'Filters', exact: true }).click()
+    const filters = page.getByRole('region', { name: 'Filters', exact: true })
+    const table = page.getByRole('table')
+    const member = filters.getByRole('group', { name: 'Member', exact: true })
+    const role = filters.getByRole('group', { name: 'Role', exact: true })
+    const joined = filters.getByRole('group', { name: 'Joined', exact: true })
+    await expect(filters).toBeVisible()
+    await expect(table.getByRole('textbox')).toHaveCount(0)
+    const memberBox = await member.boundingBox()
+    const roleBox = await role.boundingBox()
+    const joinedBox = await joined.boundingBox()
+    const tableBox = await table.boundingBox()
+    if (!memberBox || !roleBox || !joinedBox || !tableBox)
+        throw new Error('Filters and table must have geometry')
+    expect(memberBox.width).toBeGreaterThan(300)
+    expect(roleBox.y).toBeCloseTo(memberBox.y, 0)
+    expect(joinedBox.y).toBeGreaterThan(memberBox.y + memberBox.height)
+    expect(joinedBox.y + joinedBox.height).toBeLessThanOrEqual(tableBox.y)
+
+    await page
+        .getByRole('button', { name: 'Resize columns', exact: true })
+        .click()
+    const handle = page.getByRole('separator', {
+        name: 'Resize Member',
+        exact: true,
+    })
+    await handle.focus()
+    await page.keyboard.press('Shift+ArrowRight')
+    const resizedBox = await member.boundingBox()
+    expect(resizedBox?.width).toBeCloseTo(memberBox.width, 0)
+
+    await page.setViewportSize({ width: 400, height: 1000 })
+    await expect
+        .poll(async () => {
+            const first = await member.boundingBox()
+            const second = await role.boundingBox()
+            return Boolean(first && second && second.y > first.y + first.height)
+        })
+        .toBe(true)
+    expect(
+        await filters.evaluate(
+            (element) => element.scrollWidth <= element.clientWidth + 1,
+        ),
+    ).toBe(true)
+    await filters
+        .getByRole('textbox', { name: 'Filter Member', exact: true })
+        .fill('Kevin Sträßler 6')
+    await expect(table.locator('tbody tr[data-row-id]')).toHaveCount(1)
+})
+
 test('changes page sizes through the shared select and bounds the last page', async ({
     page,
 }) => {

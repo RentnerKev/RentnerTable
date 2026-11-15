@@ -34,6 +34,7 @@ export interface DataTableContext<TData extends RowData> {
 export interface DataTableClassNames {
     root?: string
     toolbar?: string
+    filters?: string
     viewport?: string
     table?: string
     header?: string
@@ -222,6 +223,16 @@ export interface TableColumnFilterProps<TData extends RowData> {
     locale: TableLocale
     messages: TableMessages
     disabled?: boolean
+}
+
+export interface DataTableFiltersProps<TData extends RowData> {
+    state: Pick<
+        DataTableLogicResult<TData>['state'],
+        'id' | 'filterColumns' | 'messages'
+    >
+    locale: TableLocale
+    disabled?: boolean
+    className?: string
 }
 
 export interface TableDateRangeFilterProps {

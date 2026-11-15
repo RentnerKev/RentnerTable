@@ -32,17 +32,19 @@ export function TableColumnFilter<TData extends RowData>({
                 placeholder={config.placeholder ?? messages.all}
                 clearable
                 emptyValue=""
-                controlSize="sm"
+                controlSize="md"
                 disabled={disabled}
                 locale={locale}
-                className="min-w-32"
+                className="w-full min-w-0"
             />
         )
     if (config?.type === 'dateRange')
         return (
             <Suspense
                 fallback={
-                    <span className="text-xs text-rentner-muted">{label}</span>
+                    <span className="flex h-11 items-center rounded-rentner-control border border-rentner-border bg-rentner-control px-3 text-sm text-rentner-muted">
+                        {label}
+                    </span>
                 }
             >
                 <TableDateRangeFilter
@@ -62,9 +64,9 @@ export function TableColumnFilter<TData extends RowData>({
             aria-label={label}
             placeholder={config?.placeholder ?? label}
             maxLength={config?.maxLength ?? 200}
-            controlSize="sm"
+            controlSize="md"
             disabled={disabled}
-            className="min-w-28"
+            className="w-full min-w-0"
         />
     )
 }

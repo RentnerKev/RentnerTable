@@ -3,6 +3,7 @@ import type { Ref } from 'react'
 import type { RowData } from '@tanstack/react-table'
 import type { RentnerTableInstance } from '../Types/table.types.ts'
 import type { ColumnResizeLogicResult } from '../Types/interaction.types.ts'
+import { fitColumnWidths } from '../../../lib/Table/columnSizing.ts'
 
 export function useTableColumnResizeLogic<TData extends RowData>(
     table: RentnerTableInstance<TData>,
@@ -19,7 +20,24 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         return element.current
     }, [])
     const [ready, setReady] = useState(false)
+    const [availableWidth, setAvailableWidth] = useState(
+        Number.POSITIVE_INFINITY,
+    )
     const columns = table.getVisibleLeafColumns()
+    useLayoutEffect(() => {
+        if (!enabled) return
+        const viewport = element.current?.parentElement
+        if (!viewport) return
+        const measure = () => {
+            if (viewport.clientWidth > 0)
+                setAvailableWidth(viewport.clientWidth)
+        }
+        measure()
+        if (typeof ResizeObserver === 'undefined') return
+        const observer = new ResizeObserver(measure)
+        observer.observe(viewport)
+        return () => observer.disconnect()
+    }, [enabled])
     useLayoutEffect(() => {
         if (!enabled || ready || !element.current) return
         const measured: Record<string, number> = {}
@@ -35,10 +53,22 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         table.setColumnSizing((current) => ({ ...measured, ...current }))
         setReady(true)
     }, [enabled, ready, table])
-    const widths = columns.map((column) => ({
-        id: column.id,
-        width: column.getSize(),
-    }))
+    const widths = fitColumnWidths(
+        columns.map((column) => ({
+            id: column.id,
+            size: column.getSize(),
+            min:
+                column.columnDef.minSize ??
+                table.options.defaultColumn?.minSize ??
+                20,
+            max:
+                column.columnDef.maxSize ??
+                table.options.defaultColumn?.maxSize ??
+                Number.MAX_SAFE_INTEGER,
+            resizable: column.getCanResize(),
+        })),
+        availableWidth - extraWidth,
+    ).map((column) => ({ id: column.id, width: column.size }))
     return {
         state: {
             fixed: enabled && ready,

@@ -28,11 +28,11 @@ export default function TableDateRangeFilter({
             aria-label={label}
             placeholder={placeholder ?? label}
             locale={locale}
-            controlSize="sm"
+            controlSize="md"
             isDeletable
             disabled={disabled}
             portalContainer={portalContainer}
-            className="min-w-44"
+            className="w-full min-w-0"
         />
     )
 }

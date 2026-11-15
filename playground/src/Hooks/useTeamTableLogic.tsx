@@ -126,17 +126,19 @@ export function useTeamTableLogic(
                                         type="button"
                                         className={
                                             row.original.active
-                                                ? 'inline-flex items-center gap-1.5 rounded-full bg-rentner-success/10 px-2.5 py-1 text-xs font-medium text-rentner-success outline-rentner-accent hover:ring-1 hover:ring-current'
-                                                : 'inline-flex items-center gap-1.5 rounded-full bg-rentner-control px-2.5 py-1 text-xs font-medium text-rentner-muted outline-rentner-accent hover:ring-1 hover:ring-current'
+                                                ? 'inline-flex max-w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-full bg-rentner-success/10 px-2.5 py-1 text-xs font-medium text-rentner-success outline-rentner-accent hover:ring-1 hover:ring-current'
+                                                : 'inline-flex max-w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-full bg-rentner-control px-2.5 py-1 text-xs font-medium text-rentner-muted outline-rentner-accent hover:ring-1 hover:ring-current'
                                         }
                                     >
                                         <span
                                             aria-hidden="true"
                                             className="size-1.5 rounded-full bg-current"
                                         />
-                                        {row.original.active
-                                            ? messages.active
-                                            : messages.inactive}
+                                        <span className="min-w-0 truncate">
+                                            {row.original.active
+                                                ? messages.active
+                                                : messages.inactive}
+                                        </span>
                                         <ChevronDown
                                             aria-hidden="true"
                                             className="size-3"

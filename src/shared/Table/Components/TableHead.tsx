@@ -86,43 +86,63 @@ export function TableHead<TData extends RowData>({
                                 item.header.column.columnDef.meta?.align
                             }
                             style={
+                                resizableColumns ||
                                 item.header.column.columnDef.size === undefined
                                     ? undefined
                                     : { width: item.header.column.getSize() }
                             }
-                            className={`relative px-4 py-3 font-medium group-data-[size=sm]/table:px-3 group-data-[size=sm]/table:py-2 group-data-[size=lg]/table:px-5 group-data-[size=lg]/table:py-4 data-[align=center]:text-center data-[align=right]:text-right ${item.header.column.columnDef.meta?.headerClassName ?? ''} ${classNames?.headerCell ?? ''}`}
+                            className={`relative py-3 font-medium group-data-[size=sm]/table:py-2 group-data-[size=lg]/table:py-4 ${resizableColumns ? 'px-0' : 'px-4 group-data-[size=sm]/table:px-3 group-data-[size=lg]/table:px-5'} data-[align=center]:text-center data-[align=right]:text-right ${item.header.column.columnDef.meta?.headerClassName ?? ''} ${classNames?.headerCell ?? ''}`}
                         >
-                            {item.canSort ? (
-                                <button
-                                    type="button"
-                                    disabled={isLoading}
-                                    onClick={item.header.column.getToggleSortingHandler()}
-                                    data-align={
-                                        item.header.column.columnDef.meta?.align
+                            <div
+                                className={
+                                    resizableColumns
+                                        ? 'min-w-0 overflow-hidden'
+                                        : undefined
+                                }
+                            >
+                                <div
+                                    className={
+                                        resizableColumns
+                                            ? 'px-4 group-data-[size=sm]/table:px-3 group-data-[size=lg]/table:px-5'
+                                            : undefined
                                     }
-                                    className="group/sort relative flex w-full items-center gap-2 rounded-sm text-left motion-safe:transition-colors hover:text-rentner-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-rentner-accent disabled:cursor-wait disabled:opacity-60 data-[align=center]:justify-center data-[align=center]:text-center data-[align=right]:justify-end data-[align=right]:text-right"
                                 >
-                                    <span className="min-w-0 truncate">
-                                        <table.FlexRender
-                                            header={item.header}
-                                        />
-                                    </span>
-                                    <span className="sr-only">
-                                        {' '}
-                                        — {item.sortAction}
-                                    </span>
-                                    <span
-                                        aria-hidden="true"
-                                        className="ml-auto shrink-0 text-rentner-accent group-data-[align=center]/sort:ml-0 group-data-[align=right]/sort:ml-0"
-                                    >
-                                        {item.sortIndicator}
-                                    </span>
-                                </button>
-                            ) : (
-                                !item.header.isPlaceholder && (
-                                    <table.FlexRender header={item.header} />
-                                )
-                            )}
+                                    {item.canSort ? (
+                                        <button
+                                            type="button"
+                                            disabled={isLoading}
+                                            onClick={item.header.column.getToggleSortingHandler()}
+                                            data-align={
+                                                item.header.column.columnDef
+                                                    .meta?.align
+                                            }
+                                            className={`group/sort relative flex w-full items-center gap-2 rounded-sm text-left motion-safe:transition-colors hover:text-rentner-foreground focus-visible:outline-2 ${resizableColumns ? 'focus-visible:-outline-offset-2' : 'focus-visible:outline-offset-4'} focus-visible:outline-rentner-accent disabled:cursor-wait disabled:opacity-60 data-[align=center]:justify-center data-[align=center]:text-center data-[align=right]:justify-end data-[align=right]:text-right`}
+                                        >
+                                            <span className="min-w-0 truncate">
+                                                <table.FlexRender
+                                                    header={item.header}
+                                                />
+                                            </span>
+                                            <span className="sr-only">
+                                                {' '}
+                                                — {item.sortAction}
+                                            </span>
+                                            <span
+                                                aria-hidden="true"
+                                                className="ml-auto shrink-0 text-rentner-accent group-data-[align=center]/sort:ml-0 group-data-[align=right]/sort:ml-0"
+                                            >
+                                                {item.sortIndicator}
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        !item.header.isPlaceholder && (
+                                            <table.FlexRender
+                                                header={item.header}
+                                            />
+                                        )
+                                    )}
+                                </div>
+                            </div>
                             {resizableColumns &&
                                 !item.header.isPlaceholder &&
                                 item.header.column.columns.length === 0 &&

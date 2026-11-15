@@ -1,5 +1,12 @@
 import type { Cell, Header, RowData } from '@tanstack/react-table'
-import type { MouseEvent, ReactNode, Ref } from 'react'
+import type {
+    KeyboardEvent,
+    MouseEvent,
+    ReactNode,
+    Ref,
+    RefObject,
+    TouchEvent,
+} from 'react'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import type { TableRow, TableBodyProps } from './dataTable.types.ts'
 import type { RentnerTableInstance, TableMessages } from './table.types.ts'
@@ -81,6 +88,26 @@ export interface TableColumnResizeHandleProps<TData extends RowData> {
     header: Header<typeof rentnerTableFeatures, TData, unknown>
     messages: TableMessages
     disabled?: boolean
+}
+
+export interface TableColumnResizeHandleLogicResult {
+    state: {
+        label: string
+        resetLabel: string
+        min: number
+        max: number
+        size: number
+        isResizing: boolean
+        offset: number
+    }
+    refs: { element: RefObject<HTMLHRElement | null> }
+    handler: {
+        handleStart: (
+            event: MouseEvent<HTMLElement> | TouchEvent<HTMLElement>,
+        ) => void
+        handleReset: () => void
+        handleKeyDown: (event: KeyboardEvent<HTMLElement>) => void
+    }
 }
 
 export interface TableReorderProviderProps {
