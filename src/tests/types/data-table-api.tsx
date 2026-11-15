@@ -1,8 +1,12 @@
 import { DataTable, createTableColumnHelper } from '../../index.ts'
+import { createRef } from 'react'
 import type {
     DataTableProps,
     TableColumn,
     TableDateRange,
+    TableStateController,
+    TableStateSnapshot,
+    TableStateStorage,
 } from '../../types.ts'
 
 interface Member {
@@ -63,6 +67,37 @@ export const props: DataTableProps<Member> = {
     },
 }
 export const example = <DataTable {...props} />
+const stateRef = createRef<TableStateController>()
+declare const loadPreferences: (
+    key: string,
+    signal?: AbortSignal,
+) => Promise<unknown>
+declare const savePreferences: (
+    key: string,
+    state: TableStateSnapshot,
+) => Promise<void>
+const storage: TableStateStorage = {
+    load: loadPreferences,
+    save: savePreferences,
+}
+export const persistedExample = (
+    <DataTable
+        {...props}
+        stateRef={stateRef}
+        persistence={{
+            key: 'account:members',
+            storage,
+            fields: [
+                'sorting',
+                'columnSizing',
+                'columnVisibility',
+                'columnFilters',
+            ],
+            onError: (_error, context) =>
+                context.operation satisfies 'load' | 'save' | 'remove',
+        }}
+    />
+)
 export const invalidRowId = (
     // @ts-expect-error Selection and details require stable string row IDs.
     <DataTable {...props} getRowId={(row) => row.active} />

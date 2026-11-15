@@ -1,4 +1,13 @@
 export type {
+    TableStateValue,
+    TableStateSnapshot,
+    TableStateField,
+    TableStateStorage,
+    TablePersistenceOptions,
+    TableStateController,
+    TablePersistenceStatus,
+} from './shared/Table/Types/persistence.types.ts'
+export type {
     TableCell,
     TableRowEvents,
     TableRowOrderChange,

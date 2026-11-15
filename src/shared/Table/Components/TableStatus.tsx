@@ -9,6 +9,7 @@ export function TableStatus({
     emptyState,
     noResultsState,
     hasFilters,
+    filterSummary,
     error,
     onRetry,
     onResetFilters,
@@ -44,7 +45,7 @@ export function TableStatus({
                             )}
                         </div>
                     ) : (
-                        <output className="inline-flex flex-col items-center gap-3">
+                        <output className="inline-flex max-w-full min-w-0 flex-col items-center gap-3">
                             {isLoading ? (
                                 <>
                                     <RefreshCw
@@ -71,10 +72,13 @@ export function TableStatus({
                                                 className="size-8"
                                             />
                                         )}
-                                        <span className="font-medium text-rentner-foreground">
+                                        <span className="max-w-full font-medium text-rentner-foreground [overflow-wrap:anywhere]">
                                             {hasFilters
-                                                ? (noResultsState ??
-                                                  view.messages.noResults)
+                                                ? (filterSummary &&
+                                                      view.messages.noResultsFor?.(
+                                                          filterSummary,
+                                                      )) ||
+                                                  view.messages.noResults
                                                 : (emptyState ??
                                                   view.messages.empty)}
                                         </span>

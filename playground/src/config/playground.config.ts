@@ -82,6 +82,7 @@ export const playgroundMessages = {
         striped: 'Striped rows',
         resize: 'Resize columns',
         reorder: 'Reorder rows',
+        remember: 'Remember settings',
         changeStatus: 'Change status',
         contextMenu: 'Table context menu',
         interactionHint:
@@ -127,6 +128,7 @@ export const playgroundMessages = {
         striped: 'Abwechselnde Zeilen',
         resize: 'Spaltenbreite ändern',
         reorder: 'Zeilen verschieben',
+        remember: 'Einstellungen merken',
         changeStatus: 'Status ändern',
         contextMenu: 'Tabellen-Kontextmenü',
         interactionHint:

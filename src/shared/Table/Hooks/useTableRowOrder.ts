@@ -11,15 +11,25 @@ export function useTableRowOrder<TData extends RowData>({
     getRowId,
     reorderableRows,
     onRowOrderChange,
+    isLoading = false,
 }: Pick<
     DataTableLogicOptions<TData>,
-    'data' | 'getRowId' | 'reorderableRows' | 'onRowOrderChange'
+    'data' | 'getRowId' | 'reorderableRows' | 'onRowOrderChange' | 'isLoading'
 >) {
     const [order, setOrder] = useState<string[]>()
     const rows = useMemo(
         () =>
             onRowOrderChange ? data : applyTableRowOrder(data, order, getRowId),
         [data, order, getRowId, onRowOrderChange],
+    )
+    const rowOrder = useMemo(
+        () =>
+            !onRowOrderChange && (reorderableRows || order !== undefined)
+                ? isLoading && order !== undefined
+                    ? order
+                    : rows.map(getRowId)
+                : undefined,
+        [rows, getRowId, onRowOrderChange, reorderableRows, order, isLoading],
     )
     const handleReorder = (activeId: string, overId: string) => {
         if (!reorderableRows) return
@@ -28,5 +38,13 @@ export function useTableRowOrder<TData extends RowData>({
         if (onRowOrderChange) onRowOrderChange(result.data, result.change)
         else setOrder(result.data.map(getRowId))
     }
-    return { state: { data: rows }, handler: { handleReorder } }
+    return {
+        state: { data: rows, rowOrder },
+        handler: {
+            handleReorder,
+            handleRestoreOrder: (ids: readonly string[]) => {
+                if (!onRowOrderChange) setOrder([...ids])
+            },
+        },
+    }
 }

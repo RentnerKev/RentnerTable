@@ -30,11 +30,13 @@ const messages: Record<TableLocale, TableMessages> = {
         columns: 'Spalten',
         resetFilters: 'Filter zurücksetzen',
         noResults: 'Keine Ergebnisse gefunden',
+        noResultsFor: (summary) => `Keine Ergebnisse gefunden für ${summary}`,
         noResultsDescription: 'Passe deine Suche oder Filter an.',
         emptyDescription: 'Sobald Daten vorhanden sind, erscheinen sie hier.',
         error: 'Die Einträge konnten nicht geladen werden.',
         retry: 'Erneut versuchen',
         all: 'Alle',
+        anyDate: 'Beliebiges Datum',
         filterColumn: (label) => `${label} filtern`,
         rowsPerPage: 'Zeilen pro Seite',
         firstPage: 'Erste Seite',
@@ -81,12 +83,14 @@ const messages: Record<TableLocale, TableMessages> = {
         columns: 'Columns',
         resetFilters: 'Reset filters',
         noResults: 'No results found',
+        noResultsFor: (summary) => `No results found for ${summary}`,
         noResultsDescription: 'Try another search or adjust your filters.',
         emptyDescription:
             'Your entries will appear here when data is available.',
         error: 'Entries could not be loaded.',
         retry: 'Try again',
         all: 'All',
+        anyDate: 'Any date',
         filterColumn: (label) => `Filter ${label}`,
         rowsPerPage: 'Rows per page',
         firstPage: 'First page',
@@ -117,7 +121,7 @@ export function resolveTableMessages(
     locale: TableLocale = 'en',
     overrides?: Partial<TableMessages>,
 ): TableMessages {
-    return Object.assign(
+    const resolved = Object.assign(
         getTableMessages(locale),
         Object.fromEntries(
             Object.entries(overrides ?? {}).filter(
@@ -125,4 +129,12 @@ export function resolveTableMessages(
             ),
         ),
     )
+    if (
+        overrides?.noResults !== undefined &&
+        overrides.noResultsFor === undefined
+    ) {
+        const title = overrides.noResults
+        resolved.noResultsFor = (summary) => `${title} — ${summary}`
+    }
+    return resolved
 }

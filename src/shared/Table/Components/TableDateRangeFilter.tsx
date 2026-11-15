@@ -32,7 +32,7 @@ export default function TableDateRangeFilter({
             isDeletable
             disabled={disabled}
             portalContainer={portalContainer}
-            className="w-full min-w-0"
+            className="w-full min-w-0 text-left"
         />
     )
 }

@@ -17,8 +17,12 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
     const [isLoading, setIsLoading] = useState(false)
     const [isLight, setIsLight] = useState(false)
     const [striped, setStriped] = useState(true)
-    const [resizableColumns, setResizableColumns] = useState(false)
-    const [reorderableRows, setReorderableRows] = useState(false)
+    const [rememberSettings, setRememberSettings] = useState(
+        () =>
+            new URLSearchParams(window.location.search).get('remember') === '1',
+    )
+    const [resizableColumns, setResizableColumns] = useState(rememberSettings)
+    const [reorderableRows, setReorderableRows] = useState(rememberSettings)
     const [error, setError] = useState(false)
     const [locale, setLocale] = useState<TableLocale>('en')
     const [size, setSize] = useState<TableSize>('md')
@@ -33,6 +37,19 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             ),
         )
     }, [])
+
+    const handleToggleRemember = () => {
+        const enabled = !rememberSettings
+        const url = new URL(window.location.href)
+        if (enabled) url.searchParams.set('remember', '1')
+        else url.searchParams.delete('remember')
+        window.history.replaceState(null, '', url)
+        setRememberSettings(enabled)
+        if (enabled) {
+            setResizableColumns(true)
+            setReorderableRows(true)
+        }
+    }
 
     const handleAddMember = () =>
         setData((current) => [
@@ -70,6 +87,7 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             striped,
             resizableColumns,
             reorderableRows,
+            rememberSettings,
             error,
         },
         handler: {
@@ -81,6 +99,7 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
                 setResizableColumns((current) => !current),
             handleToggleReorder: () =>
                 setReorderableRows((current) => !current),
+            handleToggleRemember,
             handleToggleError: () => setError((current) => !current),
             handleRetry: () => setError(false),
             handleToggleLocale: () =>

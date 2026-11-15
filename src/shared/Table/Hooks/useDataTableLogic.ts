@@ -11,11 +11,13 @@ import {
     prepareTableColumns,
 } from '../../../lib/Table/presentation.ts'
 import { resolveTableMessages } from '../../../lib/Messages/tableMessages.ts'
+import { getTableFilterSummary } from '../../../lib/Table/filterSummary.ts'
 import type {
     DataTableLogicOptions,
     DataTableLogicResult,
 } from '../Types/dataTable.types.ts'
 import { useTableRowOrder } from './useTableRowOrder.ts'
+import { useTableStatePersistence } from './useTableStatePersistence.ts'
 
 const defaultPageSizes = [10, 25, 50, 100] as const
 
@@ -36,6 +38,9 @@ export function useDataTableLogic<TData extends RowData>({
     resizableColumns = false,
     reorderableRows = false,
     onRowOrderChange,
+    persistence,
+    stateRef,
+    isLoading = false,
 }: DataTableLogicOptions<TData>): DataTableLogicResult<TData> {
     const id = useId()
     const ordered = useTableRowOrder({
@@ -43,6 +48,7 @@ export function useDataTableLogic<TData extends RowData>({
         getRowId,
         reorderableRows,
         onRowOrderChange,
+        isLoading,
     })
     const [showFilters, setShowFilters] = useState(initialShowFilters)
     const [root, setRoot] = useState<HTMLElement | null>(null)
@@ -84,6 +90,16 @@ export function useDataTableLogic<TData extends RowData>({
         },
     })
     const currentPageSize = table.state.pagination.pageSize
+    const preferences = useTableStatePersistence({
+        table,
+        persistence,
+        stateRef,
+        showFilters,
+        setShowFilters,
+        rowOrder: ordered.state.rowOrder,
+        restoreRowOrder: ordered.handler.handleRestoreOrder,
+    })
+    const restoring = preferences.refs.restoring
     const pageIndex = table.state.pagination.pageIndex
     const pageCount = table.getPageCount()
     const setPageIndex = table.setPageIndex
@@ -96,8 +112,13 @@ export function useDataTableLogic<TData extends RowData>({
     } = table.atoms
     const resetOnQueryChange = tableOptions?.autoResetPageIndex !== false
     const resetPageIfNeeded = useCallback(() => {
-        if (pagination && paginationState.get().pageIndex > 0) firstPage()
-    }, [pagination, paginationState, firstPage])
+        if (
+            !restoring.current &&
+            pagination &&
+            paginationState.get().pageIndex > 0
+        )
+            firstPage()
+    }, [pagination, paginationState, firstPage, restoring])
     useEffect(() => {
         if (!pagination || !resetOnQueryChange) return
         let previousSorting = sorting.get()
@@ -143,9 +164,21 @@ export function useDataTableLogic<TData extends RowData>({
         resetPageIfNeeded,
     ])
     useEffect(() => {
-        if (!manualPagination && pageIndex > Math.max(0, pageCount - 1))
+        if (
+            preferences.state.status !== 'loading' &&
+            !isLoading &&
+            !manualPagination &&
+            pageIndex > Math.max(0, pageCount - 1)
+        )
             setPageIndex(Math.max(0, pageCount - 1))
-    }, [manualPagination, pageCount, pageIndex, setPageIndex])
+    }, [
+        manualPagination,
+        pageCount,
+        pageIndex,
+        setPageIndex,
+        preferences.state.status,
+        isLoading,
+    ])
 
     const allColumns = table.getAllLeafColumns()
     const visibleColumns = table.getVisibleLeafColumns()
@@ -225,6 +258,14 @@ export function useDataTableLogic<TData extends RowData>({
             id,
             search,
             showFilters,
+            filterSummary: getTableFilterSummary(
+                table,
+                search,
+                locale,
+                messages,
+            ),
+            persistenceStatus: preferences.state.status,
+            persistenceError: preferences.state.error,
             hasFilters:
                 search.trim().length > 0 ||
                 table.state.columnFilters.length > 0,
@@ -271,6 +312,11 @@ export function useDataTableLogic<TData extends RowData>({
                 if (table.state.sorting.length === 0)
                     ordered.handler.handleReorder(activeId, overId)
             },
+            handleGetState: preferences.handler.getState,
+            handleRestoreState: preferences.handler.restoreState,
+            handleFlushState: preferences.handler.flush,
+            handleClearStoredState: preferences.handler.clear,
+            handleReloadState: preferences.handler.reload,
         },
         refs: { root: setRoot },
     }

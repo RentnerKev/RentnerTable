@@ -18,6 +18,7 @@ export function TableViewport<TData extends RowData>({
     loadingState,
     noResultsState,
     hasFilters,
+    filterSummary,
     error,
     onRetry,
     onResetFilters,
@@ -120,6 +121,7 @@ export function TableViewport<TData extends RowData>({
                         emptyState={emptyState}
                         noResultsState={noResultsState}
                         hasFilters={hasFilters}
+                        filterSummary={filterSummary}
                         error={error}
                         onRetry={onRetry}
                         onResetFilters={onResetFilters}

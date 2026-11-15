@@ -39,6 +39,21 @@ export type {
 export { useTableLogic } from './shared/Table/Hooks/useTableLogic.ts'
 export { createTableColumnHelper } from './lib/Table/table.ts'
 export { getTableMessages } from './lib/Messages/tableMessages.ts'
+export {
+    createBrowserTableStateStorage,
+    createTableStateSnapshot,
+    normalizeTableStateSnapshot,
+} from './lib/Table/persistence.ts'
+export { applyTableRowOrder } from './lib/Table/rowOrder.ts'
+export type {
+    TableStateValue,
+    TableStateSnapshot,
+    TableStateField,
+    TableStateStorage,
+    TablePersistenceOptions,
+    TableStateController,
+    TablePersistenceStatus,
+} from './shared/Table/Types/persistence.types.ts'
 export type {
     TableColumn,
     TableLocale,

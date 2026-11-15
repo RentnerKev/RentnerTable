@@ -51,7 +51,7 @@ export function TableColumnFilter<TData extends RowData>({
                     value={value}
                     onValueChange={(next) => column.setFilterValue(next)}
                     label={label}
-                    placeholder={config.placeholder}
+                    placeholder={config.placeholder ?? messages.anyDate}
                     locale={locale}
                     disabled={disabled}
                 />
@@ -66,7 +66,7 @@ export function TableColumnFilter<TData extends RowData>({
             maxLength={config?.maxLength ?? 200}
             controlSize="md"
             disabled={disabled}
-            className="w-full min-w-0"
+            className="w-full min-w-0 rounded-rentner-control"
         />
     )
 }

@@ -70,6 +70,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     loadingState={props.loadingState}
                     noResultsState={props.noResultsState}
                     hasFilters={state.hasFilters}
+                    filterSummary={state.filterSummary}
                     error={props.error}
                     onRetry={props.onRetry}
                     onResetFilters={handler.handleResetFilters}

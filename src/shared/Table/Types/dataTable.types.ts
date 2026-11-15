@@ -1,5 +1,10 @@
 import type { Column, Row, RowData } from '@tanstack/react-table'
-import type { ComponentPropsWithRef, ReactNode, RefObject } from 'react'
+import type { ComponentPropsWithRef, ReactNode, Ref, RefObject } from 'react'
+import type {
+    TablePersistenceOptions,
+    TablePersistenceStatus,
+    TableStateController,
+} from './persistence.types.ts'
 import type { MenuItem } from '@rentnerkev/menu'
 import type { TableDateRange } from './column.types.ts'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
@@ -59,6 +64,11 @@ export type DataTableLogicOptions<TData extends RowData> = Pick<
     getRowLabel?: (row: TData) => string
     renderExpandedRow?: (row: TableRow<TData>) => ReactNode
     initialShowFilters?: boolean
+    /** Opt in with a unique per-user/table key; defaults to localStorage. */
+    persistence?: false | string | TablePersistenceOptions
+    /** Export/restore state, flush before navigation, clear or reload saved preferences. */
+    stateRef?: Ref<TableStateController>
+    isLoading?: boolean
     /** Enable horizontal drag handles and keyboard column resizing. Defaults to false. */
     resizableColumns?: boolean
     /** Enable drag handles, row previews and keyboard reordering. Clear sorting to reorder. */
@@ -86,7 +96,6 @@ export type DataTableProps<TData extends RowData> =
             searchPlaceholder?: string
             columnFilters?: boolean
             columnVisibility?: boolean
-            isLoading?: boolean
             isRefreshing?: boolean
             error?: ReactNode
             onRetry?: () => void
@@ -110,6 +119,9 @@ export interface DataTableLogicResult<TData extends RowData> {
         id: string
         search: string
         showFilters: boolean
+        filterSummary: string
+        persistenceStatus: TablePersistenceStatus
+        persistenceError: unknown
         hasFilters: boolean
         filterCount: number
         filterColumns: TableColumnInstance<TData>[]
@@ -143,6 +155,11 @@ export interface DataTableLogicResult<TData extends RowData> {
         handleNextPage: () => void
         handleLastPage: () => void
         handleRowReorder: (activeId: string, overId: string) => void
+        handleGetState: TableStateController['getState']
+        handleRestoreState: TableStateController['restoreState']
+        handleFlushState: TableStateController['flush']
+        handleClearStoredState: TableStateController['clear']
+        handleReloadState: TableStateController['reload']
     }
     refs: { root: (element: HTMLElement | null) => void }
 }
@@ -183,6 +200,7 @@ export type TableSurfaceProps<TData extends RowData> = Omit<
         loadingState?: ReactNode
         noResultsState?: ReactNode
         hasFilters?: boolean
+        filterSummary?: string
         error?: ReactNode
         onRetry?: () => void
         onResetFilters?: () => void
@@ -286,6 +304,7 @@ export type TableStatusProps = Pick<
     | 'emptyState'
     | 'noResultsState'
     | 'hasFilters'
+    | 'filterSummary'
     | 'error'
     | 'onRetry'
     | 'onResetFilters'

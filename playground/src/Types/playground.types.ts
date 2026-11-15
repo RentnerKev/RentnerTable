@@ -28,6 +28,7 @@ export interface TeamTableProps {
     striped: boolean
     resizableColumns: boolean
     reorderableRows: boolean
+    rememberSettings: boolean
     error: boolean
     onRetry: () => void
     onAddMember: () => void
@@ -67,6 +68,7 @@ export interface PlaygroundLogicResult {
         striped: boolean
         resizableColumns: boolean
         reorderableRows: boolean
+        rememberSettings: boolean
         error: boolean
     }
     handler: {
@@ -76,6 +78,7 @@ export interface PlaygroundLogicResult {
         handleToggleStriped: () => void
         handleToggleResize: () => void
         handleToggleReorder: () => void
+        handleToggleRemember: () => void
         handleToggleLocale: () => void
         handleSizeChange: (size: TableSize) => void
         handleToggleError: () => void

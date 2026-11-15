@@ -13,6 +13,7 @@ export function TeamTable({
     striped,
     resizableColumns,
     reorderableRows,
+    rememberSettings,
     error,
     onRetry,
     onAddMember,
@@ -53,7 +54,14 @@ export function TeamTable({
                     striped={striped}
                     resizableColumns={resizableColumns}
                     reorderableRows={reorderableRows}
-                    onRowOrderChange={onRowOrderChange}
+                    onRowOrderChange={
+                        rememberSettings ? undefined : onRowOrderChange
+                    }
+                    persistence={
+                        rememberSettings
+                            ? 'rentner-table:playground:team'
+                            : undefined
+                    }
                     onRowClick={handler.handleRowClick}
                     onRowContextMenu={handler.handleRowContextMenu}
                     tableProps={{

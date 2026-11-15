@@ -121,6 +121,13 @@ export function App() {
                     <button type="button" onClick={handler.handleToggleLocale}>
                         {playgroundMessages[state.locale].language}
                     </button>
+                    <button
+                        type="button"
+                        aria-pressed={state.rememberSettings}
+                        onClick={handler.handleToggleRemember}
+                    >
+                        {playgroundMessages[state.locale].remember}
+                    </button>
                     <fieldset className="flex gap-1 rounded-lg border border-rentner-border p-1 sm:ml-auto">
                         <legend className="sr-only">
                             {playgroundMessages[state.locale].density}
@@ -159,6 +166,7 @@ export function App() {
                     striped={state.striped}
                     resizableColumns={state.resizableColumns}
                     reorderableRows={state.reorderableRows}
+                    rememberSettings={state.rememberSettings}
                     error={state.error}
                     onRetry={handler.handleRetry}
                     onAddMember={handler.handleAddMember}

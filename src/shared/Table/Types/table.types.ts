@@ -30,11 +30,13 @@ export interface TableMessages extends Partial<TableInteractionMessages> {
     columns: string
     resetFilters: string
     noResults: string
+    noResultsFor?: (summary: string) => string
     noResultsDescription: string
     emptyDescription: string
     error: string
     retry: string
     all: string
+    anyDate?: string
     filterColumn: (label: string) => string
     rowsPerPage: string
     firstPage: string
