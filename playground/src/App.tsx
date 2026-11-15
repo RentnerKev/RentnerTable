@@ -104,6 +104,20 @@ export function App() {
                     >
                         {playgroundMessages[state.locale].theme}
                     </button>
+                    <button
+                        type="button"
+                        aria-pressed={state.resizableColumns}
+                        onClick={handler.handleToggleResize}
+                    >
+                        {playgroundMessages[state.locale].resize}
+                    </button>
+                    <button
+                        type="button"
+                        aria-pressed={state.reorderableRows}
+                        onClick={handler.handleToggleReorder}
+                    >
+                        {playgroundMessages[state.locale].reorder}
+                    </button>
                     <button type="button" onClick={handler.handleToggleLocale}>
                         {playgroundMessages[state.locale].language}
                     </button>
@@ -143,10 +157,14 @@ export function App() {
                     size={state.size}
                     isLoading={state.isLoading}
                     striped={state.striped}
+                    resizableColumns={state.resizableColumns}
+                    reorderableRows={state.reorderableRows}
                     error={state.error}
                     onRetry={handler.handleRetry}
                     onAddMember={handler.handleAddMember}
                     onActivateMembers={handler.handleActivateMembers}
+                    onStatusChange={handler.handleStatusChange}
+                    onRowOrderChange={handler.handleRowOrderChange}
                 />
                 <footer className="mt-5 flex flex-wrap items-start justify-between gap-3 text-xs leading-5 text-rentner-muted">
                     <p>{playgroundMessages[state.locale].hint}</p>

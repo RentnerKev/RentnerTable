@@ -4,6 +4,10 @@ import type { MenuItem } from '@rentnerkev/menu'
 import type { TableDateRange } from './column.types.ts'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import type {
+    TableRowEvents,
+    TableRowOrderChange,
+} from './interaction.types.ts'
+import type {
     RentnerTableInstance,
     RentnerTableOptions,
     TableLogicResult,
@@ -43,6 +47,7 @@ export type DataTableLogicOptions<TData extends RowData> = Pick<
     RentnerTableOptions<TData>,
     'data' | 'columns'
 > & {
+    /** Stable record identity, independent of position, for selection and reordering. */
     getRowId: (row: TData, index: number) => string
     locale?: TableLocale
     messages?: Partial<TableMessages>
@@ -53,6 +58,12 @@ export type DataTableLogicOptions<TData extends RowData> = Pick<
     getRowLabel?: (row: TData) => string
     renderExpandedRow?: (row: TableRow<TData>) => ReactNode
     initialShowFilters?: boolean
+    /** Enable horizontal drag handles and keyboard column resizing. Defaults to false. */
+    resizableColumns?: boolean
+    /** Enable drag handles, row previews and keyboard reordering. Clear sorting to reorder. */
+    reorderableRows?: boolean
+    /** Receive the reordered input data. With this callback, the caller owns and updates data. */
+    onRowOrderChange?: (data: TData[], change: TableRowOrderChange) => void
     tableOptions?: Omit<
         RentnerTableOptions<TData>,
         'data' | 'columns' | 'getRowId' | 'enableRowSelection'
@@ -61,31 +72,36 @@ export type DataTableLogicOptions<TData extends RowData> = Pick<
 }
 
 export type DataTableProps<TData extends RowData> =
-    DataTableLogicOptions<TData> & {
-        title?: ReactNode
-        description?: ReactNode
-        icon?: ReactNode
-        searchable?: boolean
-        searchPlaceholder?: string
-        columnFilters?: boolean
-        columnVisibility?: boolean
-        isLoading?: boolean
-        isRefreshing?: boolean
-        error?: ReactNode
-        onRetry?: () => void
-        emptyState?: ReactNode
-        loadingState?: ReactNode
-        noResultsState?: ReactNode
-        size?: TableSize
-        striped?: boolean
-        stickyHeader?: boolean
-        className?: string
-        classNames?: DataTableClassNames
-        toolbarActions?:
-            ReactNode | ((context: DataTableContext<TData>) => ReactNode)
-        bulkActions?: (context: DataTableContext<TData>) => ReactNode
-        rowClassName?: (row: TableRow<TData>) => string | undefined
-    }
+    DataTableLogicOptions<TData> &
+        TableRowEvents<TData> & {
+            tableProps?: Omit<
+                ComponentPropsWithRef<'table'>,
+                'children' | 'dangerouslySetInnerHTML'
+            >
+            title?: ReactNode
+            description?: ReactNode
+            icon?: ReactNode
+            searchable?: boolean
+            searchPlaceholder?: string
+            columnFilters?: boolean
+            columnVisibility?: boolean
+            isLoading?: boolean
+            isRefreshing?: boolean
+            error?: ReactNode
+            onRetry?: () => void
+            emptyState?: ReactNode
+            loadingState?: ReactNode
+            noResultsState?: ReactNode
+            size?: TableSize
+            striped?: boolean
+            stickyHeader?: boolean
+            className?: string
+            classNames?: DataTableClassNames
+            toolbarActions?:
+                ReactNode | ((context: DataTableContext<TData>) => ReactNode)
+            bulkActions?: (context: DataTableContext<TData>) => ReactNode
+            rowClassName?: (row: TableRow<TData>) => string | undefined
+        }
 
 export interface DataTableLogicResult<TData extends RowData> {
     table: RentnerTableInstance<TData>
@@ -125,6 +141,7 @@ export interface DataTableLogicResult<TData extends RowData> {
         handlePreviousPage: () => void
         handleNextPage: () => void
         handleLastPage: () => void
+        handleRowReorder: (activeId: string, overId: string) => void
     }
     refs: { root: (element: HTMLElement | null) => void }
 }
@@ -153,33 +170,37 @@ export type DataTableToolbarProps<TData extends RowData> = {
 export type TableSurfaceProps<TData extends RowData> = Omit<
     ComponentPropsWithRef<'table'>,
     'children'
-> & {
-    table: RentnerTableInstance<TData>
-    view: TableLogicResult<TData>['state']
-    caption?: ReactNode
-    size?: TableSize
-    striped?: boolean
-    isLoading?: boolean
-    emptyState?: ReactNode
-    loadingState?: ReactNode
-    noResultsState?: ReactNode
-    hasFilters?: boolean
-    error?: ReactNode
-    onRetry?: () => void
-    onResetFilters?: () => void
-    containerClassName?: string
-    embedded?: boolean
-    stickyHeader?: boolean
-    classNames?: DataTableClassNames
-    rowClassName?: DataTableProps<TData>['rowClassName']
-    selection?: DataTableLogicResult<TData>['state']
-    onSelectPage?: () => void
-    getRowLabel?: (row: TData) => string
-    renderExpandedRow?: (row: TableRow<TData>) => ReactNode
-    detailsId?: string
-    filters?: ReactNode
-    detailedStates?: boolean
-}
+> &
+    TableRowEvents<TData> & {
+        table: RentnerTableInstance<TData>
+        view: TableLogicResult<TData>['state']
+        caption?: ReactNode
+        size?: TableSize
+        striped?: boolean
+        isLoading?: boolean
+        emptyState?: ReactNode
+        loadingState?: ReactNode
+        noResultsState?: ReactNode
+        hasFilters?: boolean
+        error?: ReactNode
+        onRetry?: () => void
+        onResetFilters?: () => void
+        containerClassName?: string
+        embedded?: boolean
+        stickyHeader?: boolean
+        classNames?: DataTableClassNames
+        rowClassName?: DataTableProps<TData>['rowClassName']
+        selection?: DataTableLogicResult<TData>['state']
+        onSelectPage?: () => void
+        getRowLabel?: (row: TData) => string
+        renderExpandedRow?: (row: TableRow<TData>) => ReactNode
+        detailsId?: string
+        filters?: ReactNode
+        detailedStates?: boolean
+        resizableColumns?: boolean
+        reorderableRows?: boolean
+        onRowReorder?: (activeId: string, overId: string) => void
+    }
 
 export type TableButtonProps = ComponentPropsWithRef<'button'> & {
     active?: boolean
@@ -223,6 +244,8 @@ export type TableHeadProps<TData extends RowData> = Pick<
     | 'filters'
     | 'classNames'
     | 'stickyHeader'
+    | 'resizableColumns'
+    | 'reorderableRows'
 >
 export type TableBodyProps<TData extends RowData> = Pick<
     TableSurfaceProps<TData>,
@@ -235,6 +258,15 @@ export type TableBodyProps<TData extends RowData> = Pick<
     | 'classNames'
     | 'rowClassName'
     | 'isLoading'
+    | 'striped'
+    | 'reorderableRows'
+    | 'resizableColumns'
+    | 'onRowClick'
+    | 'onRowDoubleClick'
+    | 'onRowContextMenu'
+    | 'onCellClick'
+    | 'onCellDoubleClick'
+    | 'onCellContextMenu'
 >
 export type TableStatusProps = Pick<
     TableSurfaceProps<object>,

@@ -41,6 +41,26 @@ export const props: DataTableProps<Member> = {
     bulkActions: ({ selectedRows }) =>
         selectedRows.map((row) => row.original.name).join(', '),
     renderExpandedRow: (row) => row.original.joined,
+    resizableColumns: true,
+    reorderableRows: true,
+    onRowOrderChange: (rows, change) => {
+        rows[change.toIndex]?.active satisfies boolean | undefined
+        change.activeId satisfies string
+    },
+    onRowClick: (row, event) => {
+        row.original.name satisfies string
+        event.currentTarget satisfies HTMLTableRowElement
+    },
+    onCellContextMenu: (cell, event) => {
+        cell.row.original.active satisfies boolean
+        cell.column.id satisfies string
+        event.currentTarget satisfies HTMLTableCellElement
+        event.preventDefault()
+    },
+    tableProps: {
+        onContextMenu: (event) =>
+            event.currentTarget satisfies HTMLTableElement,
+    },
 }
 export const example = <DataTable {...props} />
 export const invalidRowId = (

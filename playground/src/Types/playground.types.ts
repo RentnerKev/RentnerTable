@@ -3,9 +3,12 @@ import type {
     TableColumn,
     TableLocale,
     TableRow,
+    TableRowEvents,
+    TableRowOrderChange,
     TableSize,
 } from '../../../src/index.ts'
-import type { ReactNode } from 'react'
+import type { MouseEventHandler, ReactNode } from 'react'
+import type { MenuItem } from '@rentnerkev/menu'
 
 export interface Member {
     id: string
@@ -23,10 +26,14 @@ export interface TeamTableProps {
     size: TableSize
     isLoading: boolean
     striped: boolean
+    resizableColumns: boolean
+    reorderableRows: boolean
     error: boolean
     onRetry: () => void
     onAddMember: () => void
     onActivateMembers: (context: DataTableContext<Member>) => void
+    onStatusChange: (id: string, active: boolean) => void
+    onRowOrderChange: (data: Member[], change: TableRowOrderChange) => void
 }
 
 export interface TeamTableLogicResult {
@@ -35,6 +42,17 @@ export interface TeamTableLogicResult {
         caption: string
         renderExpandedRow: (row: TableRow<Member>) => ReactNode
         bulkActions: (context: DataTableContext<Member>) => ReactNode
+        contextItems: MenuItem[]
+        portalContainer: HTMLDivElement | null
+        lastRowEvent: string
+    }
+    refs: { target: (element: HTMLDivElement | null) => void }
+    handler: {
+        handleRowClick: NonNullable<TableRowEvents<Member>['onRowClick']>
+        handleRowContextMenu: NonNullable<
+            TableRowEvents<Member>['onRowContextMenu']
+        >
+        handleTableContextMenu: MouseEventHandler<HTMLTableElement>
     }
 }
 
@@ -47,6 +65,8 @@ export interface PlaygroundLogicResult {
         isLoading: boolean
         isLight: boolean
         striped: boolean
+        resizableColumns: boolean
+        reorderableRows: boolean
         error: boolean
     }
     handler: {
@@ -54,11 +74,15 @@ export interface PlaygroundLogicResult {
         handleToggleLoading: () => void
         handleToggleTheme: () => void
         handleToggleStriped: () => void
+        handleToggleResize: () => void
+        handleToggleReorder: () => void
         handleToggleLocale: () => void
         handleSizeChange: (size: TableSize) => void
         handleToggleError: () => void
         handleRetry: () => void
         handleAddMember: () => void
         handleActivateMembers: (context: DataTableContext<Member>) => void
+        handleStatusChange: TeamTableProps['onStatusChange']
+        handleRowOrderChange: TeamTableProps['onRowOrderChange']
     }
 }

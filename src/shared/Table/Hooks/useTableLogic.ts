@@ -18,6 +18,7 @@ export function useTableLogic<TData extends RowData>({
     initialSorting,
     locale = 'en',
     messages,
+    resizableColumns = false,
 }: TableLogicOptions<TData>): TableLogicResult<TData> {
     const table = useTable({
         features: rentnerTableFeatures,
@@ -25,6 +26,11 @@ export function useTableLogic<TData extends RowData>({
         columns,
         getRowId,
         enableSorting,
+        enableColumnResizing: resizableColumns,
+        columnResizeMode: 'onChange',
+        defaultColumn: resizableColumns
+            ? { minSize: 64, maxSize: 2000 }
+            : undefined,
         manualPagination: true,
         initialState: { sorting: initialSorting ?? [] },
     })

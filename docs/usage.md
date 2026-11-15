@@ -19,6 +19,60 @@ The package supports React 19, React DOM 19, Tailwind CSS 4 and TanStack Table 9
 
 `Table` takes `data`, `columns`, an optional `getRowId` and a `caption`. It renders every supplied row and supports `enableSorting`, `initialSorting`, `locale`, `messages`, density, striped rows and loading/empty content. It accepts native table attributes and a ref.
 
+## Resizing and row reordering
+
+Both capabilities are opt-in. `resizableColumns` works with `Table` and `DataTable`; `reorderableRows` is provided by `DataTable`.
+
+```tsx
+import { useState } from 'react'
+import { DataTable, createTableColumnHelper } from '@rentnerkev/table'
+
+interface Member {
+    id: string
+    name: string
+    role: string
+}
+const initialMembers: Member[] = [
+    { id: 'alex', name: 'Alex Weber', role: 'Developer' },
+    { id: 'sam', name: 'Sam Fischer', role: 'Designer' },
+]
+const column = createTableColumnHelper<Member>()
+const columns = column.columns([
+    column.accessor('name', { header: 'Member', minSize: 100, maxSize: 600 }),
+    column.accessor('role', { header: 'Role', enableResizing: false }),
+])
+
+export default function ReusableTeam() {
+    const [data, setData] = useState(initialMembers)
+    return (
+        <DataTable
+            data={data}
+            columns={columns}
+            getRowId={(member) => member.id}
+            getRowLabel={(member) => member.name}
+            title="Project team"
+            resizableColumns
+            reorderableRows
+            onRowOrderChange={(next) => setData(next)}
+        />
+    )
+}
+```
+
+Resize a leaf column at its edge. Arrow keys change width by 10 pixels, Shift+Arrow by 50; Home or double-click resets its configured size, and End selects its maximum. `minSize`, `maxSize` and `enableResizing` configure each column. Native `tableOptions.columnResizeMode`, `columnResizeDirection`, controlled `state.columnSizing` and `onColumnSizingChange` remain available on `DataTable`.
+
+Drag a row by its handle, hold the handle briefly on touch devices, or use Space, arrow keys and Space/Enter to move it with the keyboard. Escape and drops outside the table cancel. The preview stays within the visible table width and includes expanded details. Clear sorting before reordering; dragging is disabled while sorting is active or the table is loading or showing an error.
+
+`reorderableRows` alone keeps the order internally. Providing `onRowOrderChange(data, change)` makes the caller responsible for applying the returned array. `TableRowOrderChange` contains `activeId`, `overId`, `fromIndex` and `toIndex`; indices refer to the full supplied data, before filtering and pagination. Only rendered rows are drag targets. Keep stable record IDs, preserve the rest of the data when persisting server-page changes, and retain order in your backend when required. Selection and expanded details stay attached to their record during reordering. Drag dependencies load on demand.
+
+## Row, cell and table events
+
+`Table` and `DataTable` provide `onRowClick`, `onRowDoubleClick`, `onRowContextMenu`, `onCellClick`, `onCellDoubleClick` and `onCellContextMenu`. Callbacks receive the native typed row/cell followed by the React mouse event. Use `row.original`, `cell.row.original` and `cell.column.id` to route application actions.
+
+Row click and double-click notifications ignore interactive controls, prevented events and descendants marked `data-no-row-click`. Cell handlers can call `preventDefault()` to suppress the row callback, or `stopPropagation()` to stop bubbling. Render editable cells as accessible buttons or shared RentnerKev controls; those controls keep their own keyboard behavior.
+
+For context menus, either prevent the browser menu and open your own UI, or wrap the table with `ContextMenu` from `@rentnerkev/menu` and let the event bubble to that wrapper. Set the target row in `onRowContextMenu` before the wrapper opens. Native table events, attributes and refs go through `DataTable.tableProps`; `Table` accepts them directly. When using headless composition, pass `handler.handleRowReorder` to `TableSurface.onRowReorder` together with `reorderableRows`.
+
 ## Columns and filters
 
 Create columns with `createTableColumnHelper<YourRecord>()`. `helper.columns([...])` preserves typed values across heterogeneous accessor columns. Define reusable columns outside render, or memoize columns that depend on locale or callbacks.

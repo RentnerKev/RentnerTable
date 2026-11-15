@@ -32,11 +32,21 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     className={props.classNames?.toolbar}
                 />
                 <TableSurface
+                    {...props.tableProps}
                     table={table}
                     view={state}
                     aria-labelledby={`${state.id}-title`}
                     embedded
                     detailedStates
+                    resizableColumns={props.resizableColumns}
+                    reorderableRows={props.reorderableRows}
+                    onRowReorder={handler.handleRowReorder}
+                    onRowClick={props.onRowClick}
+                    onRowDoubleClick={props.onRowDoubleClick}
+                    onRowContextMenu={props.onRowContextMenu}
+                    onCellClick={props.onCellClick}
+                    onCellDoubleClick={props.onCellDoubleClick}
+                    onCellContextMenu={props.onCellContextMenu}
                     size={props.size}
                     striped={props.striped ?? true}
                     stickyHeader={props.stickyHeader}
@@ -58,6 +68,9 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     filters={
                         props.columnFilters !== false && state.showFilters ? (
                             <tr id={`${state.id}-filters`}>
+                                {props.reorderableRows && (
+                                    <td aria-hidden="true" className="w-12" />
+                                )}
                                 {state.selectionEnabled && (
                                     <td aria-hidden="true" className="w-12" />
                                 )}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type {
     DataTableContext,
     TableLocale,
@@ -17,12 +17,22 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
     const [isLoading, setIsLoading] = useState(false)
     const [isLight, setIsLight] = useState(false)
     const [striped, setStriped] = useState(true)
+    const [resizableColumns, setResizableColumns] = useState(false)
+    const [reorderableRows, setReorderableRows] = useState(false)
     const [error, setError] = useState(false)
     const [locale, setLocale] = useState<TableLocale>('en')
     const [size, setSize] = useState<TableSize>('md')
     useEffect(() => {
         document.documentElement.lang = locale
     }, [locale])
+
+    const handleStatusChange = useCallback((id: string, active: boolean) => {
+        setData((current) =>
+            current.map((member) =>
+                member.id === id ? { ...member, active } : member,
+            ),
+        )
+    }, [])
 
     const handleAddMember = () =>
         setData((current) => [
@@ -58,6 +68,8 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             isLoading,
             isLight,
             striped,
+            resizableColumns,
+            reorderableRows,
             error,
         },
         handler: {
@@ -65,6 +77,10 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             handleToggleLoading: () => setIsLoading((current) => !current),
             handleToggleTheme: () => setIsLight((current) => !current),
             handleToggleStriped: () => setStriped((current) => !current),
+            handleToggleResize: () =>
+                setResizableColumns((current) => !current),
+            handleToggleReorder: () =>
+                setReorderableRows((current) => !current),
             handleToggleError: () => setError((current) => !current),
             handleRetry: () => setError(false),
             handleToggleLocale: () =>
@@ -72,6 +88,8 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             handleSizeChange: setSize,
             handleAddMember,
             handleActivateMembers,
+            handleStatusChange,
+            handleRowOrderChange: setData,
         },
     }
 }

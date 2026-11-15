@@ -1,4 +1,10 @@
 export { Table } from './shared/Table/Components/Table.tsx'
+export type {
+    TableCell,
+    TableRowEvents,
+    TableRowOrderChange,
+    TableInteractionMessages,
+} from './shared/Table/Types/interaction.types.ts'
 export { DataTable } from './shared/Table/Components/DataTable.tsx'
 export { TableRowActions } from './shared/Table/Components/TableRowActions.tsx'
 export { useDataTableLogic } from './shared/Table/Hooks/useDataTableLogic.ts'

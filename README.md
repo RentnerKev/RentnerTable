@@ -117,6 +117,9 @@ Screenshots come from the local playground with example data.
 - Keyboard sorting, Shift multi-sort, column visibility and configurable page sizes.
 - Stable row selection across pages, selectable-row predicates and bulk actions.
 - Row action menus, expandable details and custom cell renderers.
+- Optional column resizing with mouse, touch and keyboard controls.
+- Optional row reordering with bounded previews, keyboard support and controlled data callbacks.
+- Typed row/cell click, double-click and context-menu callbacks for application actions.
 - Loading, refreshing, error/retry, empty and no-results states.
 - German and English messages with per-message overrides.
 - Shared `--rentner-*` theme tokens, scoped popup containers, three densities and striped rows.
@@ -135,7 +138,7 @@ bun run playground:install
 bun run playground:dev
 ```
 
-Open **http://127.0.0.1:4179**. Try filters, bulk actions, row details, light/dark themes, density, language and the loading/error/empty states.
+Open **http://127.0.0.1:4179**. Try resizing, row reordering, status editing, context menus, filters, bulk actions, row details, themes and loading/error/empty states.
 
 ```bash
 bunx playwright install chromium firefox webkit

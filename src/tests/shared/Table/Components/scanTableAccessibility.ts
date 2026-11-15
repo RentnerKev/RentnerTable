@@ -17,6 +17,15 @@ try {
     })
     const page = await context.newPage()
     await page.goto(baseURL)
+    await page
+        .getByRole('button', { name: 'Resize columns', exact: true })
+        .click()
+    await page
+        .getByRole('button', { name: 'Reorder rows', exact: true })
+        .click()
+    await page
+        .getByRole('button', { name: 'Move Kevin Sträßler', exact: true })
+        .waitFor({ state: 'visible' })
     await page.getByRole('button', { name: 'Filters', exact: true }).click()
     await page
         .getByRole('button', { name: /^Filter Joined/ })

@@ -1,6 +1,7 @@
 import type { RowData } from '@tanstack/react-table'
 import { ChevronRight } from 'lucide-react'
 import { TableCheckbox } from './TableCheckbox.tsx'
+import { TableResizeHandle } from './TableResizeHandle.tsx'
 import type { TableHeadProps } from '../Types/dataTable.types.ts'
 
 export function TableHead<TData extends RowData>({
@@ -13,6 +14,8 @@ export function TableHead<TData extends RowData>({
     filters,
     classNames,
     stickyHeader,
+    resizableColumns,
+    reorderableRows,
 }: TableHeadProps<TData>) {
     return (
         <thead
@@ -20,6 +23,17 @@ export function TableHead<TData extends RowData>({
         >
             {view.headerGroups.map((group, index) => (
                 <tr key={group.id}>
+                    {index === 0 && reorderableRows && (
+                        <th
+                            scope="col"
+                            rowSpan={view.headerGroups.length}
+                            className="w-12 px-2 py-3"
+                        >
+                            <span className="sr-only">
+                                {view.messages.moveRows ?? 'Reorder rows'}
+                            </span>
+                        </th>
+                    )}
                     {index === 0 && selection?.selectionEnabled && (
                         <th
                             scope="col"
@@ -63,6 +77,11 @@ export function TableHead<TData extends RowData>({
                             scope={item.header.colSpan > 1 ? 'colgroup' : 'col'}
                             aria-hidden={item.header.isPlaceholder || undefined}
                             aria-sort={item.sortDirection}
+                            data-column-id={
+                                !item.header.isPlaceholder
+                                    ? item.header.column.id
+                                    : undefined
+                            }
                             data-align={
                                 item.header.column.columnDef.meta?.align
                             }
@@ -71,7 +90,7 @@ export function TableHead<TData extends RowData>({
                                     ? undefined
                                     : { width: item.header.column.getSize() }
                             }
-                            className={`px-4 py-3 font-medium group-data-[size=sm]/table:px-3 group-data-[size=sm]/table:py-2 group-data-[size=lg]/table:px-5 group-data-[size=lg]/table:py-4 data-[align=center]:text-center data-[align=right]:text-right ${item.header.column.columnDef.meta?.headerClassName ?? ''} ${classNames?.headerCell ?? ''}`}
+                            className={`relative px-4 py-3 font-medium group-data-[size=sm]/table:px-3 group-data-[size=sm]/table:py-2 group-data-[size=lg]/table:px-5 group-data-[size=lg]/table:py-4 data-[align=center]:text-center data-[align=right]:text-right ${item.header.column.columnDef.meta?.headerClassName ?? ''} ${classNames?.headerCell ?? ''}`}
                         >
                             {item.canSort ? (
                                 <button
@@ -83,7 +102,11 @@ export function TableHead<TData extends RowData>({
                                     }
                                     className="group/sort relative flex w-full items-center gap-2 rounded-sm text-left motion-safe:transition-colors hover:text-rentner-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-rentner-accent disabled:cursor-wait disabled:opacity-60 data-[align=center]:justify-center data-[align=center]:text-center data-[align=right]:justify-end data-[align=right]:text-right"
                                 >
-                                    <table.FlexRender header={item.header} />
+                                    <span className="min-w-0 truncate">
+                                        <table.FlexRender
+                                            header={item.header}
+                                        />
+                                    </span>
                                     <span className="sr-only">
                                         {' '}
                                         — {item.sortAction}
@@ -100,6 +123,17 @@ export function TableHead<TData extends RowData>({
                                     <table.FlexRender header={item.header} />
                                 )
                             )}
+                            {resizableColumns &&
+                                !item.header.isPlaceholder &&
+                                item.header.column.columns.length === 0 &&
+                                item.header.column.getCanResize() && (
+                                    <TableResizeHandle
+                                        table={table}
+                                        header={item.header}
+                                        messages={view.messages}
+                                        disabled={isLoading}
+                                    />
+                                )}
                         </th>
                     ))}
                 </tr>

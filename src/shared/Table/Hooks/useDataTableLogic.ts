@@ -15,6 +15,7 @@ import type {
     DataTableLogicOptions,
     DataTableLogicResult,
 } from '../Types/dataTable.types.ts'
+import { useTableRowOrder } from './useTableRowOrder.ts'
 
 const defaultPageSizes = [10, 25, 50, 100] as const
 
@@ -32,8 +33,17 @@ export function useDataTableLogic<TData extends RowData>({
     initialShowFilters = false,
     tableOptions,
     portalContainer,
+    resizableColumns = false,
+    reorderableRows = false,
+    onRowOrderChange,
 }: DataTableLogicOptions<TData>): DataTableLogicResult<TData> {
     const id = useId()
+    const ordered = useTableRowOrder({
+        data,
+        getRowId,
+        reorderableRows,
+        onRowOrderChange,
+    })
     const [showFilters, setShowFilters] = useState(initialShowFilters)
     const [root, setRoot] = useState<HTMLElement | null>(null)
     const messages = useMemo(
@@ -49,9 +59,15 @@ export function useDataTableLogic<TData extends RowData>({
     const table = useTable({
         globalFilterFn: 'text',
         autoResetPageIndex: false,
+        autoResetExpanded: reorderableRows ? false : undefined,
+        columnResizeMode: 'onChange',
+        enableColumnResizing: resizableColumns,
         ...tableOptions,
+        defaultColumn: resizableColumns
+            ? { minSize: 64, maxSize: 2000, ...tableOptions?.defaultColumn }
+            : tableOptions?.defaultColumn,
         features: rentnerTableFeatures,
-        data,
+        data: ordered.state.data,
         columns: preparedColumns,
         getRowId,
         enableRowSelection: selectable,
@@ -175,7 +191,9 @@ export function useDataTableLogic<TData extends RowData>({
     const view = getTableView(
         table,
         messages,
-        Number(selectionEnabled) + Number(Boolean(renderExpandedRow)),
+        Number(selectionEnabled) +
+            Number(Boolean(renderExpandedRow)) +
+            Number(reorderableRows),
     )
     const totalRows = tableOptions?.manualPagination
         ? (tableOptions.rowCount ?? null)
@@ -249,6 +267,10 @@ export function useDataTableLogic<TData extends RowData>({
             handlePreviousPage: table.previousPage,
             handleNextPage: table.nextPage,
             handleLastPage: table.lastPage,
+            handleRowReorder: (activeId, overId) => {
+                if (table.state.sorting.length === 0)
+                    ordered.handler.handleReorder(activeId, overId)
+            },
         },
         refs: { root: setRoot },
     }

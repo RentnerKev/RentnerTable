@@ -113,13 +113,20 @@ const columns = helper.columns([
     helper.accessor('name', { header: 'Name', cell: (cell) => cell.getValue().toUpperCase() }),
     helper.accessor('age', { header: 'Age' }),
 ])
-const props: TableProps<Person> = { data: [{ id: 'one', name: 'Alex', age: 24 }], columns, caption: 'People' }
+const props: TableProps<Person> = { data: [{ id: 'one', name: 'Alex', age: 24 }], columns, caption: 'People', resizableColumns: true }
 const markup = renderToString(createElement(Table<Person>, props))
 if (!markup.includes('ALEX') || !markup.includes('<table')) throw new Error('SSR table missing')
 if (Table !== DirectTable) throw new Error('Subpath exports differ')
-const rich: DataTableProps<Person> = { data: props.data, columns, getRowId: (row) => row.id, title: 'People', selectable: true }
+const rich: DataTableProps<Person> = {
+    data: props.data, columns, getRowId: (row) => row.id, title: 'People', selectable: true,
+    resizableColumns: true,
+    onRowOrderChange: (rows, change) => { rows[change.toIndex]?.name.toUpperCase() },
+    onCellContextMenu: (cell, event) => { cell.row.original.name.toUpperCase(); event.preventDefault() },
+    tableProps: { onClick: event => { event.currentTarget.tagName.toLowerCase() } },
+}
 const richMarkup = renderToString(createElement(DataTable<Person>, rich))
 if (!richMarkup.includes('ALEX') || !richMarkup.includes('data-rentner-data-table')) throw new Error('SSR data table missing')
+if (!richMarkup.includes('Resize Name')) throw new Error('SSR resize controls missing')
 if (DataTable !== DirectDataTable) throw new Error('Data table subpath differs')
 `,
     )
@@ -170,7 +177,7 @@ import { createRoot } from 'react-dom/client'
 import { DataTable } from '@rentnerkev/table/data-table'
 import './styles.css'
 const root = document.getElementById('root')
-if (root) createRoot(root).render(createElement(DataTable, { data: [], columns: [], getRowId: (_row: object, index: number) => String(index), title: 'People' }))
+if (root) createRoot(root).render(createElement(DataTable, { data: [], columns: [], getRowId: (_row: object, index: number) => String(index), title: 'People', resizableColumns: true, reorderableRows: true }))
 `,
     )
     await Bun.write(
@@ -193,6 +200,14 @@ if (root) createRoot(root).render(createElement(DataTable, { data: [], columns: 
     assert.ok(
         css.includes('.border-collapse'),
         'Tailwind must discover classes in the packaged dist files',
+    )
+    assert.ok(
+        css.includes('.cursor-col-resize'),
+        'Resize handle styles must be packaged',
+    )
+    assert.ok(
+        css.includes('.cursor-grab'),
+        'Row drag handle styles must be packaged',
     )
     const map = JSON.parse(
         readFileSync(

@@ -1,4 +1,10 @@
 export type {
+    TableCell,
+    TableRowEvents,
+    TableRowOrderChange,
+    TableInteractionMessages,
+} from './shared/Table/Types/interaction.types.ts'
+export type {
     TableColumn,
     TableLocale,
     TableLogicOptions,

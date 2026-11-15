@@ -13,6 +13,7 @@ export function Table<TData extends RowData>({
     initialSorting,
     locale,
     messages,
+    resizableColumns,
     ...appearance
 }: TableProps<TData>) {
     const { table, state } = useTableLogic({
@@ -23,6 +24,14 @@ export function Table<TData extends RowData>({
         initialSorting,
         locale,
         messages,
+        resizableColumns,
     })
-    return <TableSurface {...appearance} table={table} view={state} />
+    return (
+        <TableSurface
+            {...appearance}
+            resizableColumns={resizableColumns}
+            table={table}
+            view={state}
+        />
+    )
 }

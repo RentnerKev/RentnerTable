@@ -5,6 +5,19 @@ import type {
 
 const messages: Record<TableLocale, TableMessages> = {
     de: {
+        resizeColumn: (label) => `Breite von ${label} ändern`,
+        resetColumnSize: (label) => `Breite von ${label} zurücksetzen`,
+        moveRows: 'Zeilen verschieben',
+        moveRow: (label) => `${label} verschieben`,
+        rowSortingActive: 'Sortierung aufheben, um Zeilen zu verschieben.',
+        dragInstructions:
+            'Leertaste zum Aufnehmen, Pfeiltasten zum Verschieben, Leertaste oder Enter zum Ablegen, Escape zum Abbrechen.',
+        dragStart: (label) => `${label} aufgenommen.`,
+        dragOver: (label, position, total) =>
+            `${label}: Position ${position} von ${total}.`,
+        dragEnd: (label, position, total) =>
+            `${label} auf Position ${position} von ${total} abgelegt.`,
+        dragCancel: (label) => `Verschieben von ${label} abgebrochen.`,
         empty: 'Keine Einträge vorhanden.',
         loading: 'Einträge werden geladen …',
         sortAscending: 'Aufsteigend sortieren',
@@ -43,6 +56,19 @@ const messages: Record<TableLocale, TableMessages> = {
         collapseRow: (label) => `Details für ${label} schließen`,
     },
     en: {
+        resizeColumn: (label) => `Resize ${label}`,
+        resetColumnSize: (label) => `Reset width of ${label}`,
+        moveRows: 'Reorder rows',
+        moveRow: (label) => `Move ${label}`,
+        rowSortingActive: 'Clear sorting to reorder rows.',
+        dragInstructions:
+            'Press Space to pick up a row, arrow keys to move, Space or Enter to drop, and Escape to cancel.',
+        dragStart: (label) => `Picked up ${label}.`,
+        dragOver: (label, position, total) =>
+            `${label}: position ${position} of ${total}.`,
+        dragEnd: (label, position, total) =>
+            `Dropped ${label} at position ${position} of ${total}.`,
+        dragCancel: (label) => `Cancelled moving ${label}.`,
         empty: 'No entries found.',
         loading: 'Loading entries …',
         sortAscending: 'Sort ascending',

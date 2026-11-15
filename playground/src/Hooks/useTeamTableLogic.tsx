@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
-import { Eye, MousePointer2, UserCheck } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Menu } from '@rentnerkev/menu'
+import { ChevronDown, Eye, MousePointer2, Plus, UserCheck } from 'lucide-react'
 import { createTableColumnHelper, TableRowActions } from '../../../src/index.ts'
-import type { TableLocale } from '../../../src/index.ts'
+import type { TableLocale, TableRow } from '../../../src/index.ts'
 import { playgroundMessages } from '../config/playground.config.ts'
 import type {
     Member,
@@ -14,8 +15,14 @@ const column = createTableColumnHelper<Member>()
 export function useTeamTableLogic(
     locale: TableLocale,
     onActivateMembers: TeamTableProps['onActivateMembers'],
+    onStatusChange: TeamTableProps['onStatusChange'],
+    onAddMember: TeamTableProps['onAddMember'],
+    isLoading: boolean,
 ): TeamTableLogicResult {
     const messages = playgroundMessages[locale]
+    const [target, setTarget] = useState<HTMLDivElement | null>(null)
+    const [contextRow, setContextRow] = useState<TableRow<Member> | null>(null)
+    const [lastRowEvent, setLastRowEvent] = useState('')
     const columns = useMemo(
         () =>
             column.columns([
@@ -88,21 +95,55 @@ export function useTeamTableLogic(
                             },
                         },
                         cell: ({ row }) => (
-                            <span
-                                className={
-                                    row.original.active
-                                        ? 'inline-flex items-center gap-1.5 rounded-full bg-rentner-success/10 px-2.5 py-1 text-xs font-medium text-rentner-success'
-                                        : 'inline-flex items-center gap-1.5 rounded-full bg-rentner-control px-2.5 py-1 text-xs font-medium text-rentner-muted'
+                            <Menu
+                                asChild
+                                disabled={isLoading}
+                                ariaLabel={`${messages.changeStatus}: ${row.original.name} — ${row.original.active ? messages.active : messages.inactive}`}
+                                items={[
+                                    {
+                                        id: 'active',
+                                        type: 'radio',
+                                        name: 'status',
+                                        label: messages.active,
+                                        checked: row.original.active,
+                                        closeOnSelect: true,
+                                        onCheckedChange: () =>
+                                            onStatusChange(row.id, true),
+                                    },
+                                    {
+                                        id: 'inactive',
+                                        type: 'radio',
+                                        name: 'status',
+                                        label: messages.inactive,
+                                        checked: !row.original.active,
+                                        closeOnSelect: true,
+                                        onCheckedChange: () =>
+                                            onStatusChange(row.id, false),
+                                    },
+                                ]}
+                                trigger={
+                                    <button
+                                        type="button"
+                                        className={
+                                            row.original.active
+                                                ? 'inline-flex items-center gap-1.5 rounded-full bg-rentner-success/10 px-2.5 py-1 text-xs font-medium text-rentner-success outline-rentner-accent hover:ring-1 hover:ring-current'
+                                                : 'inline-flex items-center gap-1.5 rounded-full bg-rentner-control px-2.5 py-1 text-xs font-medium text-rentner-muted outline-rentner-accent hover:ring-1 hover:ring-current'
+                                        }
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            className="size-1.5 rounded-full bg-current"
+                                        />
+                                        {row.original.active
+                                            ? messages.active
+                                            : messages.inactive}
+                                        <ChevronDown
+                                            aria-hidden="true"
+                                            className="size-3"
+                                        />
+                                    </button>
                                 }
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    className="size-1.5 rounded-full bg-current"
-                                />
-                                {row.original.active
-                                    ? messages.active
-                                    : messages.inactive}
-                            </span>
+                            />
                         ),
                     },
                 ),
@@ -148,12 +189,58 @@ export function useTeamTableLogic(
                     ),
                 }),
             ]),
-        [locale, messages],
+        [locale, messages, onStatusChange, isLoading],
     )
     return {
         state: {
             columns,
             caption: messages.caption,
+            portalContainer: target,
+            lastRowEvent,
+            contextItems: contextRow
+                ? [
+                      {
+                          id: 'member',
+                          type: 'label',
+                          label: contextRow.original.name,
+                      },
+                      {
+                          id: 'details',
+                          disabled: isLoading,
+                          label: messages.details,
+                          icon: <Eye className="size-4" />,
+                          onSelect: () => contextRow.toggleExpanded(),
+                      },
+                      {
+                          id: 'select',
+                          disabled: isLoading,
+                          label: messages.select,
+                          icon: <MousePointer2 className="size-4" />,
+                          onSelect: () => contextRow.toggleSelected(),
+                      },
+                      { id: 'separator', type: 'separator' },
+                      {
+                          id: 'active',
+                          label: messages.active,
+                          disabled: isLoading,
+                          onSelect: () => onStatusChange(contextRow.id, true),
+                      },
+                      {
+                          id: 'inactive',
+                          label: messages.inactive,
+                          disabled: isLoading,
+                          onSelect: () => onStatusChange(contextRow.id, false),
+                      },
+                  ]
+                : [
+                      {
+                          id: 'add',
+                          disabled: isLoading,
+                          label: messages.add,
+                          icon: <Plus className="size-4" />,
+                          onSelect: onAddMember,
+                      },
+                  ],
             bulkActions: (context) => (
                 <button
                     type="button"
@@ -189,6 +276,26 @@ export function useTeamTableLogic(
                     </div>
                 </div>
             ),
+        },
+        refs: { target: setTarget },
+        handler: {
+            handleRowClick: (row) => {
+                setContextRow(row)
+                setLastRowEvent(`${messages.clicked}: ${row.original.name}`)
+            },
+            handleRowContextMenu: (row) => {
+                setContextRow(row)
+                setLastRowEvent(
+                    `${messages.rightClicked}: ${row.original.name}`,
+                )
+            },
+            handleTableContextMenu: (event) => {
+                if (
+                    event.target instanceof Element &&
+                    !event.target.closest('tr[data-row-id]')
+                )
+                    setContextRow(null)
+            },
         },
     }
 }

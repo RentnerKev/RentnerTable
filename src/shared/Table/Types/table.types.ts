@@ -9,11 +9,15 @@ import type {
     TableOptions,
 } from '@tanstack/react-table'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
+import type {
+    TableInteractionMessages,
+    TableRowEvents,
+} from './interaction.types.ts'
 
 export type TableLocale = 'de' | 'en'
 export type TableSize = 'sm' | 'md' | 'lg'
 
-export interface TableMessages {
+export interface TableMessages extends Partial<TableInteractionMessages> {
     empty: string
     loading: string
     sortAscending: string
@@ -70,13 +74,16 @@ export type TableLogicOptions<TData extends RowData> = Pick<
     initialSorting?: SortingState
     locale?: TableLocale
     messages?: Partial<TableMessages>
+    /** Enable horizontal drag handles and keyboard column resizing. Defaults to false. */
+    resizableColumns?: boolean
 }
 
 export type TableProps<TData extends RowData> = Omit<
     ComponentPropsWithRef<'table'>,
     'children'
 > &
-    TableLogicOptions<TData> & {
+    TableLogicOptions<TData> &
+    TableRowEvents<TData> & {
         children?: never
         caption?: ReactNode
         size?: TableSize
