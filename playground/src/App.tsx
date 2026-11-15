@@ -172,7 +172,6 @@ export function App() {
                     onAddMember={handler.handleAddMember}
                     onActivateMembers={handler.handleActivateMembers}
                     onStatusChange={handler.handleStatusChange}
-                    onRowOrderChange={handler.handleRowOrderChange}
                 />
                 <footer className="mt-5 flex flex-wrap items-start justify-between gap-3 text-xs leading-5 text-rentner-muted">
                     <p>{playgroundMessages[state.locale].hint}</p>

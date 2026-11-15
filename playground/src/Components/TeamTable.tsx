@@ -19,7 +19,6 @@ export function TeamTable({
     onAddMember,
     onActivateMembers,
     onStatusChange,
-    onRowOrderChange,
 }: TeamTableProps) {
     const {
         state,
@@ -54,9 +53,6 @@ export function TeamTable({
                     striped={striped}
                     resizableColumns={resizableColumns}
                     reorderableRows={reorderableRows}
-                    onRowOrderChange={
-                        rememberSettings ? undefined : onRowOrderChange
-                    }
                     persistence={
                         rememberSettings
                             ? 'rentner-table:playground:team'

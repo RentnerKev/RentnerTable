@@ -4,7 +4,6 @@ import type {
     TableLocale,
     TableRow,
     TableRowEvents,
-    TableRowOrderChange,
     TableSize,
 } from '../../../src/index.ts'
 import type { MouseEventHandler, ReactNode } from 'react'
@@ -34,7 +33,6 @@ export interface TeamTableProps {
     onAddMember: () => void
     onActivateMembers: (context: DataTableContext<Member>) => void
     onStatusChange: (id: string, active: boolean) => void
-    onRowOrderChange: (data: Member[], change: TableRowOrderChange) => void
 }
 
 export interface TeamTableLogicResult {
@@ -86,6 +84,5 @@ export interface PlaygroundLogicResult {
         handleAddMember: () => void
         handleActivateMembers: (context: DataTableContext<Member>) => void
         handleStatusChange: TeamTableProps['onStatusChange']
-        handleRowOrderChange: TeamTableProps['onRowOrderChange']
     }
 }

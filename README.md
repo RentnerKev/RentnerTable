@@ -103,7 +103,7 @@ Screenshots come from the local playground with example data.
 <summary>Mobile layout</summary>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/RentnerKev/RentnerTable/main/assets/readme/screenshots/mobile-table.png" alt="Mobile table with horizontal scrolling inside its viewport" width="350">
+    <img src="https://raw.githubusercontent.com/RentnerKev/RentnerTable/main/assets/readme/screenshots/mobile-table.png" alt="Mobile table with bounded resizing and selected visible columns" width="350">
 </p>
 
 </details>
@@ -113,14 +113,15 @@ Screenshots come from the local playground with example data.
 ## Features
 
 - Typed accessor, display and grouped columns through `createTableColumnHelper`.
-- Global search, independent text/select/date-range filters and custom filter renderers.
+- Global search and spacious, responsive text/select/date-range filters with custom renderers.
 - Keyboard sorting, Shift multi-sort, column visibility and configurable page sizes.
 - Stable row selection across pages, selectable-row predicates and bulk actions.
 - Row action menus, expandable details and custom cell renderers.
-- Optional column resizing with mouse, touch and keyboard controls.
+- Optional column resizing bounded by the available viewport, with mouse, touch and keyboard controls.
 - Optional row reordering with bounded previews, keyboard support and controlled data callbacks.
 - Typed row/cell click, double-click and context-menu callbacks for application actions.
-- Loading, refreshing, error/retry, empty and no-results states.
+- Loading, refreshing, error/retry, empty and no-results states with readable search/filter context.
+- Optional versioned preferences in local/session storage or an asynchronous database adapter, including internal row order.
 - German and English messages with per-message overrides.
 - Shared `--rentner-*` theme tokens, scoped popup containers, three densities and striped rows.
 - Native table semantics, SSR, headless composition and controlled server pagination/filtering/sorting.
@@ -138,7 +139,7 @@ bun run playground:install
 bun run playground:dev
 ```
 
-Open **http://127.0.0.1:4179**. Try resizing, row reordering, status editing, context menus, filters, bulk actions, row details, themes and loading/error/empty states.
+Open **http://127.0.0.1:4179**. Try resizing, row reordering, status editing, context menus, filters, bulk actions, row details, themes and loading/error/empty states. Enable **Remember settings** and reload to restore the table's preferences and internal row order.
 
 ```bash
 bunx playwright install chromium firefox webkit

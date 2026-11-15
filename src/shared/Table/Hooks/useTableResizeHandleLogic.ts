@@ -31,6 +31,13 @@ export function useTableResizeHandleLogic<TData extends RowData>({
     )
     const [previewOffset, setPreviewOffset] = useState(0)
     const column = header.column
+    const visibleColumnCount = table.getVisibleLeafColumns().length
+    // The public table wrapper changes per render; the observer only needs
+    // the latest committed column count to distinguish utility columns.
+    const visibleColumnCountRef = useRef(visibleColumnCount)
+    useLayoutEffect(() => {
+        visibleColumnCountRef.current = visibleColumnCount
+    }, [visibleColumnCount])
     const label = getColumnLabel(column)
     const isResizing = column.getIsResizing()
     const direction = table.options.columnResizeDirection === 'rtl' ? -1 : 1
@@ -41,7 +48,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
             return Number.POSITIVE_INFINITY
         const utilityCount =
             (tableElement.querySelector('colgroup')?.children.length ?? 0) -
-            table.getVisibleLeafColumns().length
+            visibleColumnCountRef.current
         const utilityWidth = Array.from(
             tableElement.querySelector('colgroup')?.children ?? [],
         )
@@ -55,7 +62,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 0,
             )
         return Math.max(0, viewport.clientWidth - utilityWidth)
-    }, [table])
+    }, [])
     useLayoutEffect(() => {
         const measure = () => setAvailableWidth(getAvailableWidth())
         const viewport = element.current?.closest('table')?.parentElement

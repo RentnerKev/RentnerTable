@@ -108,7 +108,6 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             handleAddMember,
             handleActivateMembers,
             handleStatusChange,
-            handleRowOrderChange: setData,
         },
     }
 }

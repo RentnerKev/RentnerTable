@@ -5,6 +5,37 @@ test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
 })
 
+test('keeps the reordered rows when remembering settings is turned off', async ({
+    page,
+}) => {
+    await page.goto('/?remember=1')
+    const table = page.getByRole('table')
+    const handle = table.getByRole('button', {
+        name: 'Move Kevin Sträßler',
+        exact: true,
+    })
+    await expect(handle).toBeEnabled()
+    await handle.focus()
+    await page.keyboard.press('Space')
+    await expect(page.locator('[data-rentner-row-preview]')).toBeVisible()
+    await page.keyboard.press('ArrowDown')
+    await expect(page.locator('[id^="DndLiveRegion"]')).toContainText(
+        'position 2 of 10',
+    )
+    await page.keyboard.press('Space')
+    await expect(table.locator('tr[data-row-id]').nth(1)).toHaveAttribute(
+        'data-row-id',
+        'kevin',
+    )
+    await page
+        .getByRole('button', { name: 'Remember settings', exact: true })
+        .click()
+    await expect(table.locator('tr[data-row-id]').nth(1)).toHaveAttribute(
+        'data-row-id',
+        'kevin',
+    )
+})
+
 test('opts in from the playground without changing the default mode', async ({
     page,
 }) => {

@@ -1,6 +1,6 @@
 {
     "name": "@rentnerkev/table",
-    "version": "0.0.2",
+    "version": "1.0.0",
     "description": "Accessible, typed React tables with TanStack Table and shared RentnerKev styling.",
     "author": "RentnerKev",
     "license": "MIT",

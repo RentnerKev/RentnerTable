@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { createTableColumnHelper, DataTable } from '../../../../index.ts'
 
@@ -28,7 +28,108 @@ const columns = helper.columns([
     }),
 ])
 
+const resizeTableView = (
+    roleVisible = true,
+    selectable = false,
+    maxSize = 1000,
+) => (
+    <DataTable
+        data={[{ name: 'Kevin', role: 'Engineer', team: 'Core' }]}
+        columns={maxSize === 1000 ? columns : [...columns]}
+        resizableColumns
+        selectable={selectable}
+        renderExpandedRow={selectable ? () => <p>Details</p> : undefined}
+        tableOptions={{
+            defaultColumn: { minSize: 90, maxSize },
+            state: { columnVisibility: { role: roleVisible } },
+        }}
+    />
+)
+
 describe('bounded resize interactions', () => {
+    test('keeps resize observers connected while updating widths, visibility and utility columns', () => {
+        const originalObserver = globalThis.ResizeObserver
+        const viewportWidth = Object.getOwnPropertyDescriptor(
+            HTMLElement.prototype,
+            'clientWidth',
+        )
+        let width = 600
+        const observers: Observer[] = []
+        class Observer implements ResizeObserver {
+            disconnected = false
+            constructor(readonly callback: ResizeObserverCallback) {
+                observers.push(this)
+            }
+            observe() {}
+            unobserve() {}
+            disconnect() {
+                this.disconnected = true
+            }
+        }
+        globalThis.ResizeObserver = Observer
+        Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+            configurable: true,
+            get() {
+                return this.hasAttribute('data-rentner-table-container')
+                    ? width
+                    : 0
+            },
+        })
+        try {
+            const { rerender, unmount } = render(resizeTableView())
+            const handle = screen.getByRole('separator', {
+                name: 'Resize Name',
+            })
+            expect(handle.getAttribute('aria-valuemax')).toBe('430')
+            const initial = observers.length
+            expect(initial).toBe(3)
+            for (let index = 0; index < 10; index++) rerender(resizeTableView())
+            fireEvent.mouseDown(handle, { button: 0, clientX: 100 })
+            for (let index = 0; index < 10; index++)
+                fireEvent.mouseMove(document, { clientX: 100 + index * 10 })
+            fireEvent.mouseUp(document, { clientX: 200 })
+            expect(observers).toHaveLength(initial)
+            expect(observers.every((observer) => !observer.disconnected)).toBe(
+                true,
+            )
+
+            rerender(resizeTableView(false, true))
+            expect(handle.getAttribute('aria-valuemax')).toBe('432')
+            expect(observers).toHaveLength(initial)
+            expect(
+                observers.filter((observer) => observer.disconnected),
+            ).toHaveLength(1)
+            width = 400
+            act(() => {
+                for (const observer of observers)
+                    if (!observer.disconnected) observer.callback([], observer)
+            })
+            expect(handle.getAttribute('aria-valuemax')).toBe('232')
+            fireEvent.keyDown(handle, { key: 'End' })
+            expect(handle.getAttribute('aria-valuenow')).toBe('232')
+
+            rerender(resizeTableView(false, true, 180))
+            expect(handle.getAttribute('aria-valuemax')).toBe('180')
+            fireEvent.keyDown(handle, { key: 'End' })
+            expect(handle.getAttribute('aria-valuenow')).toBe('180')
+            expect(observers).toHaveLength(initial)
+            unmount()
+            expect(observers.every((observer) => observer.disconnected)).toBe(
+                true,
+            )
+        } finally {
+            cleanup()
+            globalThis.ResizeObserver = originalObserver
+            if (viewportWidth)
+                Object.defineProperty(
+                    HTMLElement.prototype,
+                    'clientWidth',
+                    viewportWidth,
+                )
+            else Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth')
+        }
+    })
+
     test('preserves controlled onEnd sizing, group leaves, inherited limits, RTL and touch cleanup', () => {
         const viewportWidth = Object.getOwnPropertyDescriptor(
             HTMLElement.prototype,

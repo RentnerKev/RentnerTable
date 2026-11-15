@@ -59,11 +59,95 @@ export default function ReusableTeam() {
 }
 ```
 
-Resize a leaf column at its edge. Arrow keys change width by 10 pixels, Shift+Arrow by 50; Home or double-click resets its configured size, and End selects its maximum. `minSize`, `maxSize` and `enableResizing` configure each column. Native `tableOptions.columnResizeMode`, `columnResizeDirection`, controlled `state.columnSizing` and `onColumnSizingChange` remain available on `DataTable`.
+Resize a leaf column at its edge. Width stays within the available viewport: growing a column borrows available space from resizable peers until their minimum sizes or the configured maximum is reached. Arrow keys change width by 10 pixels, Shift+Arrow by 50; Home or double-click resets its configured size, and End selects its available maximum. `minSize`, `maxSize` and `enableResizing` configure each column. When a viewport cannot contain the configured minima, rendered widths fit proportionally without replacing persisted size preferences. Native `tableOptions.columnResizeMode`, `columnResizeDirection`, controlled `state.columnSizing` and `onColumnSizingChange` remain available on `DataTable`.
 
 Drag a row by its handle, hold the handle briefly on touch devices, or use Space, arrow keys and Space/Enter to move it with the keyboard. Escape and drops outside the table cancel. The preview stays within the visible table width and includes expanded details. Clear sorting before reordering; dragging is disabled while sorting is active or the table is loading or showing an error.
 
 `reorderableRows` alone keeps the order internally. Providing `onRowOrderChange(data, change)` makes the caller responsible for applying the returned array. `TableRowOrderChange` contains `activeId`, `overId`, `fromIndex` and `toIndex`; indices refer to the full supplied data, before filtering and pagination. Only rendered rows are drag targets. Keep stable record IDs, preserve the rest of the data when persisting server-page changes, and retain order in your backend when required. Selection and expanded details stay attached to their record during reordering. Drag dependencies load on demand.
+
+## Remembering table preferences
+
+Persistence is opt-in. Set `persistence="members:user-id"` for local browser storage, or supply an options object. Use a unique key per table and account; use React's `key` when changing the component's application identity. No complete data records, event handlers or transient drag state are stored.
+
+```tsx
+import { useRef } from 'react'
+import { DataTable, createTableColumnHelper } from '@rentnerkev/table'
+import type { TableStateController } from '@rentnerkev/table'
+
+type Member = { id: string; name: string }
+const column = createTableColumnHelper<Member>()
+const columns = column.columns([column.accessor('name', { header: 'Member' })])
+
+export function PersistentMembers({
+    members,
+    userId,
+    isLoading,
+}: {
+    members: readonly Member[]
+    userId: string
+    isLoading: boolean
+}) {
+    const preferences = useRef<TableStateController>(null)
+    return (
+        <DataTable
+            key={userId}
+            data={members}
+            columns={columns}
+            getRowId={(member) => member.id}
+            isLoading={isLoading}
+            resizableColumns
+            reorderableRows
+            selectable
+            stateRef={preferences}
+            persistence={{ key: `members:${userId}`, storage: 'local' }}
+        />
+    )
+}
+```
+
+Snapshots have `{ version: 1, state: { ... } }`. Supported fields are `sorting`, `columnFilters`, `globalFilter`, `columnVisibility`, `columnSizing`, `pagination`, `rowSelection`, `expanded`, `showFilters` and internal `rowOrder`. Set `fields` to an allowlist, for example `['sorting', 'columnSizing', 'columnVisibility']`. Use `storage: 'session'` for tab-session storage. Writes default to a 250 ms debounce; `debounceMs` changes the delay. Browser storage also flushes synchronously on `pagehide`.
+
+Internal row order is a list of stable IDs and survives asynchronous data loading when `isLoading` is supplied. With `onRowOrderChange`, the application owns data order: persist the returned IDs/positions in the application backend and supply the ordered records when loading. `applyTableRowOrder(data, ids, getRowId)` applies an ID list to current records while retaining new records' insertion positions.
+
+### Asynchronous database storage
+
+Supply a `TableStateStorage` adapter. `load(key, signal)` returns a snapshot or `null`; `save(key, snapshot)` stores it; optional `remove(key)` clears it. For example, connect these methods to an authenticated application API:
+
+```ts
+import type { TableStateStorage } from '@rentnerkev/table'
+
+const endpoint = (key: string) =>
+    `/api/table-preferences/${encodeURIComponent(key)}`
+export const preferencesStorage: TableStateStorage = {
+    async load(key, signal) {
+        const response = await fetch(endpoint(key), { signal })
+        if (response.status === 404) return null
+        if (!response.ok)
+            throw new Error(`Loading preferences failed (${response.status})`)
+        return response.json()
+    },
+    async save(key, snapshot) {
+        const response = await fetch(endpoint(key), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(snapshot),
+        })
+        if (!response.ok)
+            throw new Error(`Saving preferences failed (${response.status})`)
+    },
+    async remove(key) {
+        const response = await fetch(endpoint(key), { method: 'DELETE' })
+        if (!response.ok && response.status !== 404)
+            throw new Error(`Clearing preferences failed (${response.status})`)
+    },
+}
+```
+
+Pass `persistence={{ key, storage: preferencesStorage, onError }}`. The table validates loaded snapshots, ignores obsolete columns, preserves fields edited while loading, aborts obsolete loads, and serializes writes so an older request cannot overwrite a later change. Failed loads leave the current UI usable and do not overwrite stored preferences with defaults. `onError(error, { operation, key })` reports failures; `onRestore(snapshot)` observes accepted state. Custom filter values must be JSON-compatible; unsupported values are omitted, and optional undefined object properties are omitted like `JSON.stringify`.
+
+`stateRef` exposes `getState()`, `restoreState(snapshot)`, `flush()`, `clear()` and `reload()`. Exported snapshots are detached; restoring a partial snapshot uses native controlled-state callbacks. `clear()` removes stored preferences without resetting the current UI, and `reload()` retries loading. If an adapter has no `remove`, clearing saves an empty snapshot. Await `flush()` before application navigation when the backend must confirm a write; arbitrary asynchronous requests cannot be guaranteed to finish after a browser tab closes.
+
+The headless hook exposes the same operations as `handler.handleGetState`, `handleRestoreState`, `handleFlushState`, `handleClearStoredState` and `handleReloadState`, plus `state.persistenceStatus` and `state.persistenceError`. Browser storage is accessed after mounting, so server rendering does not require `window`.
 
 ## Row, cell and table events
 
@@ -175,10 +259,14 @@ Set `locale="de"` or `locale="en"` and override individual labels or formatter f
 
 `isLoading` displays the loading state and disables built-in controls. `isRefreshing` retains the visible rows and adds a refresh indicator. Custom `toolbarActions` and `bulkActions` remain application-owned; manage their disabled state in your action components.
 
-Use `error={true}` for the translated default error message, a React node for custom content, and `onRetry` for retry behavior. `error={false}` leaves data visible. `emptyState`, `loadingState` and `noResultsState` customize their respective content. Filtered empty results include a reset action.
+Use `error={true}` for the translated default error message, a React node for custom content, and `onRetry` for retry behavior. `error={false}` leaves data visible. `emptyState`, `loadingState` and `noResultsState` customize their respective content. Filtered empty results include the active search and column-filter values, with readable select labels and dates, and a reset action. `messages.noResultsFor(summary)` customizes that title; custom `noResultsState` content retains precedence. The separate responsive filter panel remains visible, with `messages.anyDate` available for its date placeholder.
 
 ## Rendering and performance
 
 The library is ESM with public subpath exports and server-renderable markup. Interactive consumers need a client boundary in frameworks that distinguish server and client components. Date-filter UI loads lazily; row data remains application-owned.
 
-Pagination bounds rendered rows. Row virtualization, fetching, CSV export, editing, persistence and infinite scrolling are application responsibilities. For large remote datasets, filter/sort/page on the server and provide a page of rows. Keep `data`, columns and controlled state referentially stable when their contents have not changed.
+Pagination bounds rendered rows. Row virtualization, fetching, CSV export, editing, application-record persistence and infinite scrolling are application responsibilities. Table preferences have their own optional storage adapter. For large remote datasets, filter/sort/page on the server and provide a page of rows. Keep `data`, columns and controlled state referentially stable when their contents have not changed.
+
+## Updating from 0.0.2 to 1.0.0
+
+React 19 and Tailwind CSS 4 remain required, and existing public prop names remain available. Resizing now fits the viewport, and built-in filters use a responsive panel below the toolbar instead of header cells; update application CSS that targeted the old filter row. The additive message fields `anyDate` and `noResultsFor` are optional. Resizing, row dragging and persistence remain opt-in. Preference snapshots start at version 1; adapt custom storage responses to that versioned format.
