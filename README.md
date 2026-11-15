@@ -5,6 +5,7 @@
 <p align="center">
     <a href="https://github.com/RentnerKev/RentnerTable/actions/workflows/ci.yml"><img src="https://github.com/RentnerKev/RentnerTable/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
     <a href="https://github.com/RentnerKev/RentnerTable/actions/workflows/codeql.yml"><img src="https://github.com/RentnerKev/RentnerTable/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"></a>
+    <a href="https://scorecard.dev/viewer/?uri=github.com/RentnerKev/RentnerTable"><img src="https://api.scorecard.dev/projects/github.com/RentnerKev/RentnerTable/badge" alt="OpenSSF Scorecard"></a>
     <a href="https://www.npmjs.com/package/@rentnerkev/table"><img src="https://img.shields.io/npm/v/@rentnerkev/table" alt="npm version"></a>
     <a href="https://www.npmjs.com/package/@rentnerkev/table"><img src="https://img.shields.io/npm/dm/@rentnerkev/table" alt="npm downloads"></a>
     <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-61dafb" alt="React 19"></a>
@@ -161,3 +162,7 @@ The npm Trusted Publisher authorizes GitHub owner `RentnerKev`, repository `Rent
 ## License
 
 MIT © RentnerKev
+
+## Community
+
+See [Contributing](.github/CONTRIBUTING.md), the [Code of Conduct](.github/CODE_OF_CONDUCT.md), [Support](.github/SUPPORT.md), and the [Security Policy](SECURITY.md).
