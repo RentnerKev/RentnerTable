@@ -25,7 +25,7 @@ export function releaseBody(
     repository: string,
     server: string,
 ): string {
-    const banner = `![RentnerTable release banner](${server}/${repository}/releases/download/${release.tag_name}/release-banner.svg)`
+    const banner = `![RentnerTable release banner](${server}/${repository}/releases/download/${release.tag_name}/release-banner.png)`
     const start = existing.indexOf(startMarker)
     const end = existing.indexOf(endMarker)
     if (

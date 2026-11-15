@@ -1,0 +1,7 @@
+Tool: built-in image_gen, referenced-image edit, opaque background.
+Reference: https://raw.githubusercontent.com/RentnerKev/RentnerMenu/main/assets/readme/banner.png
+Output: assets/readme/banner.png
+Reused for: .github/assets/release-banners/new-release-banner.png
+
+Final prompt:
+Use case: text-localization and precise-object-edit. Asset type: very wide GitHub README banner for RentnerTable, in the exact established RentnerKev package family. Edit the provided RentnerMenu banner into a RentnerTable banner. Preserve the existing 3:1 landscape composition, tropical beach sunset, palms, friendly elderly white-haired man at the laptop giving a thumbs up, wooden desk, coding mug, cyan neon outline, dark rounded title panel, and polished photorealistic 3D advertising style. Replace the large title text with EXACTLY 'RentnerTable' in the same prominent white 3D typography. Replace the subtitle with EXACTLY 'React Tables' in cyan. Replace the floating menu and submenu graphic at lower left with a clean cyan neon data table graphic, featuring a header row, four tidy rows, small selection checkboxes, three columns, and a small sort arrow. Keep the table graphic fully below the title panel, no overlapping typography. Only these replacements; retain the family identity and original wide framing. The only text in the final banner should be RentnerTable and React Tables, no watermark.

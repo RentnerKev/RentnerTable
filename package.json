@@ -10,7 +10,9 @@
     "files": [
         "dist",
         "tailwind.css",
-        "theme.css"
+        "theme.css",
+        "README.md",
+        "docs/usage.md"
     ],
     "sideEffects": [
         "./tailwind.css",
@@ -60,8 +62,8 @@
         "playground:build": "bun --cwd playground build",
         "lint": "oxlint --deny-warnings src scripts playground/src playground/vite.config.ts playwright.config.ts .github/scripts",
         "lint:fix": "oxlint --fix --deny-warnings src scripts playground/src playground/vite.config.ts playwright.config.ts .github/scripts",
-        "format": "bun fmt src scripts playground .github package.json tsconfig.json tsconfig.type-tests.json playwright.config.ts .oxlintrc.json bunfig.toml theme.css tailwind.css cliff.toml",
-        "format:check": "bun fmt --check src scripts playground .github package.json tsconfig.json tsconfig.type-tests.json playwright.config.ts .oxlintrc.json bunfig.toml theme.css tailwind.css cliff.toml",
+        "format": "bun fmt src scripts playground .github docs README.md package.json tsconfig.json tsconfig.type-tests.json playwright.config.ts .oxlintrc.json bunfig.toml theme.css tailwind.css cliff.toml",
+        "format:check": "bun fmt --check src scripts playground .github docs README.md package.json tsconfig.json tsconfig.type-tests.json playwright.config.ts .oxlintrc.json bunfig.toml theme.css tailwind.css cliff.toml",
         "verify": "bun run playground:install && bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build && bun run pack:check && bun run pack:consumer && bun run playground:build && bun run e2e"
     },
     "repository": {

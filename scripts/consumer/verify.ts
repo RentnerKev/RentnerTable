@@ -80,12 +80,23 @@ try {
         'dist/tests',
         'scripts',
         '.github',
+        'assets',
     ]) {
         assert.ok(
             !existsSync(join(installed, path)),
             `${path} must not leak into the package`,
         )
     }
+
+    for (const documentation of ['README.md', 'docs/usage.md'])
+        assert.ok(
+            existsSync(join(installed, documentation)),
+            `${documentation} must be packaged`,
+        )
+    const readme = readFileSync(join(installed, 'README.md'), 'utf8')
+    const quickStart = /```tsx\r?\n([\s\S]*?)\r?\n```/.exec(readme)?.[1]
+    assert.ok(quickStart, 'The README must contain a complete TSX quick start')
+    await Bun.write(join(temporary, 'readme-example.tsx'), quickStart)
 
     await Bun.write(
         join(temporary, 'consumer.tsx'),
@@ -125,7 +136,7 @@ if (DataTable !== DirectDataTable) throw new Error('Data table subpath differs')
                 jsx: 'react-jsx',
                 lib: ['ESNext', 'DOM'],
             },
-            include: ['consumer.tsx'],
+            include: ['consumer.tsx', 'readme-example.tsx'],
         }),
     )
     run(['bun', 'run', '--bun', 'tsc', '--noEmit'])
