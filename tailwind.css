@@ -1,0 +1,7 @@
+@import './theme.css';
+@import '@rentnerkev/inputs/tailwind.css';
+@import '@rentnerkev/select/tailwind.css';
+@import '@rentnerkev/menu/tailwind.css';
+@import '@rentnerkev/calendar/tailwind.css';
+
+@source './dist/**/*.js';

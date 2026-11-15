@@ -1,0 +1,269 @@
+import type { Column, Row, RowData } from '@tanstack/react-table'
+import type { ComponentPropsWithRef, ReactNode, RefObject } from 'react'
+import type { MenuItem } from '@rentnerkev/menu'
+import type { TableDateRange } from './column.types.ts'
+import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
+import type {
+    RentnerTableInstance,
+    RentnerTableOptions,
+    TableLogicResult,
+    TableLocale,
+    TableMessages,
+    TableSize,
+} from './table.types.ts'
+
+export type TableRow<TData extends RowData> = Row<
+    typeof rentnerTableFeatures,
+    TData
+>
+export type TableColumnInstance<TData extends RowData> = Column<
+    typeof rentnerTableFeatures,
+    TData,
+    unknown
+>
+
+export interface DataTableContext<TData extends RowData> {
+    table: RentnerTableInstance<TData>
+    selectedRows: readonly TableRow<TData>[]
+}
+
+export interface DataTableClassNames {
+    root?: string
+    toolbar?: string
+    viewport?: string
+    table?: string
+    header?: string
+    headerCell?: string
+    row?: string
+    cell?: string
+    footer?: string
+}
+
+export type DataTableLogicOptions<TData extends RowData> = Pick<
+    RentnerTableOptions<TData>,
+    'data' | 'columns'
+> & {
+    getRowId: (row: TData, index: number) => string
+    locale?: TableLocale
+    messages?: Partial<TableMessages>
+    pagination?: boolean
+    pageSize?: number
+    pageSizeOptions?: readonly number[]
+    selectable?: boolean | ((row: TableRow<TData>) => boolean)
+    getRowLabel?: (row: TData) => string
+    renderExpandedRow?: (row: TableRow<TData>) => ReactNode
+    initialShowFilters?: boolean
+    tableOptions?: Omit<
+        RentnerTableOptions<TData>,
+        'data' | 'columns' | 'getRowId' | 'enableRowSelection'
+    >
+    portalContainer?: Element | DocumentFragment | null
+}
+
+export type DataTableProps<TData extends RowData> =
+    DataTableLogicOptions<TData> & {
+        title?: ReactNode
+        description?: ReactNode
+        icon?: ReactNode
+        searchable?: boolean
+        searchPlaceholder?: string
+        columnFilters?: boolean
+        columnVisibility?: boolean
+        isLoading?: boolean
+        isRefreshing?: boolean
+        error?: ReactNode
+        onRetry?: () => void
+        emptyState?: ReactNode
+        loadingState?: ReactNode
+        noResultsState?: ReactNode
+        size?: TableSize
+        striped?: boolean
+        stickyHeader?: boolean
+        className?: string
+        classNames?: DataTableClassNames
+        toolbarActions?:
+            ReactNode | ((context: DataTableContext<TData>) => ReactNode)
+        bulkActions?: (context: DataTableContext<TData>) => ReactNode
+        rowClassName?: (row: TableRow<TData>) => string | undefined
+    }
+
+export interface DataTableLogicResult<TData extends RowData> {
+    table: RentnerTableInstance<TData>
+    state: TableLogicResult<TData>['state'] & {
+        id: string
+        search: string
+        showFilters: boolean
+        hasFilters: boolean
+        filterCount: number
+        filterColumns: TableColumnInstance<TData>[]
+        columnItems: MenuItem[]
+        selectedRows: TableRow<TData>[]
+        selectionCount: number
+        selectionEnabled: boolean
+        canSelectPage: boolean
+        allPageSelected: boolean
+        somePageSelected: boolean
+        firstRow: number
+        lastRow: number
+        totalRows: number | null
+        totalPages: number | null
+        page: number
+        pageSize: number
+        pageSizes: { value: number; label: string }[]
+        canPreviousPage: boolean
+        canNextPage: boolean
+        portalContainer: Element | DocumentFragment | null
+    }
+    handler: {
+        handleSearch: (value: string) => void
+        handleToggleFilters: () => void
+        handleResetFilters: () => void
+        handleClearSelection: () => void
+        handleSelectPage: () => void
+        handlePageSize: (value: number) => void
+        handleFirstPage: () => void
+        handlePreviousPage: () => void
+        handleNextPage: () => void
+        handleLastPage: () => void
+    }
+    refs: { root: (element: HTMLElement | null) => void }
+}
+
+export type DataTableToolbarProps<TData extends RowData> = {
+    state: DataTableLogicResult<TData>['state']
+    handler: DataTableLogicResult<TData>['handler']
+    options: Pick<
+        DataTableProps<TData>,
+        | 'title'
+        | 'description'
+        | 'icon'
+        | 'searchable'
+        | 'searchPlaceholder'
+        | 'columnFilters'
+        | 'columnVisibility'
+        | 'toolbarActions'
+        | 'bulkActions'
+        | 'isLoading'
+        | 'isRefreshing'
+    >
+    table: RentnerTableInstance<TData>
+    className?: string
+}
+
+export type TableSurfaceProps<TData extends RowData> = Omit<
+    ComponentPropsWithRef<'table'>,
+    'children'
+> & {
+    table: RentnerTableInstance<TData>
+    view: TableLogicResult<TData>['state']
+    caption?: ReactNode
+    size?: TableSize
+    striped?: boolean
+    isLoading?: boolean
+    emptyState?: ReactNode
+    loadingState?: ReactNode
+    noResultsState?: ReactNode
+    hasFilters?: boolean
+    error?: ReactNode
+    onRetry?: () => void
+    onResetFilters?: () => void
+    containerClassName?: string
+    embedded?: boolean
+    stickyHeader?: boolean
+    classNames?: DataTableClassNames
+    rowClassName?: DataTableProps<TData>['rowClassName']
+    selection?: DataTableLogicResult<TData>['state']
+    onSelectPage?: () => void
+    getRowLabel?: (row: TData) => string
+    renderExpandedRow?: (row: TableRow<TData>) => ReactNode
+    detailsId?: string
+    filters?: ReactNode
+    detailedStates?: boolean
+}
+
+export type TableButtonProps = ComponentPropsWithRef<'button'> & {
+    active?: boolean
+    iconOnly?: boolean
+}
+export interface TableCheckboxProps {
+    checked: boolean
+    indeterminate?: boolean
+    disabled?: boolean
+    label: string
+    onChange: () => void
+}
+export interface TableCheckboxLogicResult {
+    refs: { input: RefObject<HTMLInputElement | null> }
+}
+
+export interface TableColumnFilterProps<TData extends RowData> {
+    column: TableColumnInstance<TData>
+    locale: TableLocale
+    messages: TableMessages
+    disabled?: boolean
+}
+
+export interface TableDateRangeFilterProps {
+    value: unknown
+    onValueChange: (value: TableDateRange) => void
+    label: string
+    placeholder?: string
+    locale: TableLocale
+    disabled?: boolean
+}
+
+export type TableHeadProps<TData extends RowData> = Pick<
+    TableSurfaceProps<TData>,
+    | 'table'
+    | 'view'
+    | 'selection'
+    | 'onSelectPage'
+    | 'renderExpandedRow'
+    | 'isLoading'
+    | 'filters'
+    | 'classNames'
+    | 'stickyHeader'
+>
+export type TableBodyProps<TData extends RowData> = Pick<
+    TableSurfaceProps<TData>,
+    | 'table'
+    | 'view'
+    | 'selection'
+    | 'renderExpandedRow'
+    | 'getRowLabel'
+    | 'detailsId'
+    | 'classNames'
+    | 'rowClassName'
+    | 'isLoading'
+>
+export type TableStatusProps = Pick<
+    TableSurfaceProps<object>,
+    | 'isLoading'
+    | 'loadingState'
+    | 'emptyState'
+    | 'noResultsState'
+    | 'hasFilters'
+    | 'error'
+    | 'onRetry'
+    | 'onResetFilters'
+    | 'detailedStates'
+> & { view: { columnCount: number; messages: TableMessages } }
+export type DataTablePaginationProps<TData extends RowData> = {
+    state: DataTableLogicResult<TData>['state']
+    handler: DataTableLogicResult<TData>['handler']
+    locale: TableLocale
+    pagination: boolean
+    disabled?: boolean
+    className?: string
+}
+
+export interface TableRowActionsProps {
+    label: string
+    items: readonly MenuItem[]
+    disabled?: boolean
+}
+
+export interface TableProviderProps {
+    children: ReactNode
+    portalContainer?: Element | DocumentFragment | null
+}

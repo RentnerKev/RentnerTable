@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+@import '../../tailwind.css';
+
+@source '../../src/**/*.{ts,tsx}';
+@source './**/*.{ts,tsx}';
+
+@theme {
+    --color-background-dark: #101419;
+    --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+    color-scheme: dark;
+}
+body {
+    @apply m-0 min-w-80 font-sans;
+}
+button {
+    @apply cursor-pointer;
+}
+button:disabled {
+    @apply cursor-wait;
+}
+[data-playground-controls] button {
+    @apply rounded-md border border-transparent px-3 py-2 text-xs font-medium text-rentner-muted motion-safe:transition-colors hover:bg-rentner-control hover:text-rentner-foreground;
+}
+[data-playground-controls] button[aria-pressed='true'] {
+    @apply border-rentner-accent/20 bg-rentner-accent/10 text-rentner-accent;
+}
+[data-playground-controls] button:focus-visible {
+    @apply outline-2 outline-offset-4 outline-rentner-accent;
+}
+
+.light-theme {
+    color-scheme: light;
+    --color-background-dark: #f5f7fa;
+    --rentner-surface: #ffffff;
+    --rentner-control: #edf0f5;
+    --rentner-foreground: #17202b;
+    --rentner-muted: #526174;
+    --rentner-border: #d7dde5;
+    --rentner-accent: #006b60;
+    --rentner-accent-hover: #00594f;
+    --rentner-accent-foreground: #ffffff;
+    --rentner-success: #097349;
+}

@@ -1,0 +1,42 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": {
+        "correctness": "error",
+        "suspicious": "warn",
+        "perf": "warn"
+    },
+    "plugins": [
+        "typescript",
+        "react",
+        "import",
+        "unicorn",
+        "promise",
+        "node",
+        "oxc",
+        "jsx-a11y"
+    ],
+    "ignorePatterns": [
+        "**/dist/**",
+        "**/node_modules/**",
+        "**/.env",
+        "**/.env.*",
+        "test-results/**",
+        "playwright-report/**",
+        "coverage/**"
+    ],
+    "rules": {
+        "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }],
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "error",
+        "typescript/no-explicit-any": "error",
+        "typescript/no-unused-vars": [
+            "error",
+            { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+        ],
+        "react/react-in-jsx-scope": "off",
+        "react/no-children-prop": "off",
+        "react/jsx-no-useless-fragment": "warn",
+        "import/no-cycle": "off",
+        "unicorn/filename-case": "off"
+    }
+}
