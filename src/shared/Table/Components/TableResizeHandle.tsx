@@ -30,7 +30,7 @@ export function TableResizeHandle<TData extends RowData>(
             style={{
                 transform: `translateX(${state.offset}px)`,
             }}
-            className="[background-image:linear-gradient(currentColor,currentColor)] [background-size:3px_calc((100%_-_var(--spacing)*4)*0.65)] bg-right bg-no-repeat rtl:bg-left absolute inset-y-0 end-0 z-20 m-0 h-full w-3 touch-none cursor-col-resize select-none border-0 text-rentner-muted/70 outline-none! hover:text-rentner-accent focus-visible:text-rentner-accent focus-visible:drop-shadow-[0_0_2px_var(--rentner-accent,#13ecd6)] data-[resizing=true]:text-rentner-accent aria-disabled:cursor-default"
+            className="[background-image:linear-gradient(currentColor,currentColor)] [background-size:3px_calc((100%_-_var(--spacing)*4)*0.65)] bg-right bg-no-repeat rtl:bg-left absolute inset-y-0 end-0 z-20 m-0 h-full w-3 touch-none cursor-col-resize select-none border-0 text-rentner-muted/70 outline-none! hover:text-rentner-accent focus-visible:text-rentner-accent data-[resizing=true]:text-rentner-accent aria-disabled:cursor-default"
         />
     )
 }

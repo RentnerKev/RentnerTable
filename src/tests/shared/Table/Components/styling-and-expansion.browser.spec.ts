@@ -70,6 +70,7 @@ test('centers a longer resize marker and keeps host focus outlines off the drag 
     })
     await handle.focus()
     await expect(handle).toHaveCSS('outline-style', 'none')
+    await expect(handle).toHaveCSS('filter', 'none')
     await expect(handle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
     const geometry = await handle.evaluate((element) => {
         const divider = element.parentElement?.querySelector(
