@@ -11,6 +11,7 @@ const stateFields: readonly TableStateField[] = [
     'globalFilter',
     'columnVisibility',
     'columnSizing',
+    'columnOrder',
     'pagination',
     'rowSelection',
     'expanded',
@@ -143,12 +144,14 @@ function normalizeField(
                 return invalid
             return { pageIndex, pageSize }
         }
+        case 'columnOrder':
         case 'rowOrder': {
             if (!Array.isArray(value)) return invalid
             const result: string[] = []
             for (let index = 0; index < value.length; index++) {
                 const entry = ownValue(value, String(index))
                 if (typeof entry !== 'string') return invalid
+                if (field === 'columnOrder' && (!entry || !isSafeKey(entry) || result.includes(entry))) return invalid
                 result.push(entry)
             }
             return result

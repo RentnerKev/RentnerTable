@@ -57,6 +57,25 @@ function memoryStorage(initial?: TableStateSnapshot) {
 }
 
 describe('table state persistence integration', () => {
+    test('restores column order, ignores removed columns and appends new columns', async () => {
+        const { storage, records } = memoryStorage(snapshot({ columnOrder: ['removed', 'role'] }))
+        const { result } = renderHook(() => useDataTableLogic({ ...base, persistence: { key: 'preferences', storage, fields: ['columnOrder'] } }))
+        await waitFor(() => expect(result.current.state.persistenceStatus).toBe('ready'))
+        expect(result.current.table.getVisibleLeafColumns().map(column => column.id)).toEqual(['role', 'name'])
+        act(() => result.current.table.setColumnOrder(['name', 'role']))
+        await act(async () => { await result.current.handler.handleFlushState() })
+        expect(records.get('preferences')?.state).toEqual({ columnOrder: ['name', 'role'] })
+    })
+
+    test('restores column order through the controlled callback', () => {
+        const { result } = renderHook(() => {
+            const [columnOrder, setColumnOrder] = useState(['name', 'role'])
+            return useDataTableLogic({ ...base, tableOptions: { state: { columnOrder }, onColumnOrderChange: setColumnOrder } })
+        })
+        act(() => { expect(result.current.handler.handleRestoreState(snapshot({ columnOrder: ['role', 'name'] }))).toBe(true) })
+        expect(result.current.table.getVisibleLeafColumns().map(column => column.id)).toEqual(['role', 'name'])
+    })
+
     test('browser pagehide does not recreate preferences that were explicitly cleared', async () => {
         const key = 'table-clear-pagehide-regression'
         const { result, unmount } = renderHook(() =>

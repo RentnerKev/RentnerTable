@@ -15,6 +15,7 @@ describe('table state snapshots', () => {
             globalFilter: 'needle',
             columnVisibility: { hidden: false },
             columnSizing: { name: 240 },
+            columnOrder: ['role', 'name'],
             pagination: { pageIndex: 2, pageSize: 30 },
             rowSelection: { row1: true },
             expanded: { row1: true },
@@ -88,6 +89,10 @@ describe('table state snapshots', () => {
         { version: 1, state: { rowSelection: { a: 'yes' } } },
         { version: 1, state: { expanded: false } },
         { version: 1, state: { rowOrder: ['a', 2] } },
+        { version: 1, state: { columnOrder: ['a', 2] } },
+        { version: 1, state: { columnOrder: ['a', 'a'] } },
+        { version: 1, state: { columnOrder: [''] } },
+        { version: 1, state: { columnOrder: ['__proto__'] } },
     ])('rejects malformed snapshots: %j', (value) => {
         expect(normalizeTableStateSnapshot(value)).toBeNull()
     })

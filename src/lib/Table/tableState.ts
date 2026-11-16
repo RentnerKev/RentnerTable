@@ -10,6 +10,9 @@ export function restoreTableState<TData extends RowData>(
     const columns = new Map(
         table.getAllLeafColumns().map((column) => [column.id, column]),
     )
+    if (state.columnOrder !== undefined) {
+        table.setColumnOrder(state.columnOrder.filter((id) => columns.has(id)))
+    }
     if (state.sorting !== undefined)
         table.setSorting(
             state.sorting.filter((item) => columns.get(item.id)?.getCanSort()),
