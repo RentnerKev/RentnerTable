@@ -88,7 +88,7 @@ export function DataTableToolbar<TData extends RowData>({
                                     options.searchPlaceholder ??
                                     state.messages.searchPlaceholder
                                 }
-                                maxLength={200}
+                                maxLength={options.searchMaxLength ?? 200}
                                 icon={
                                     <Search
                                         aria-hidden="true"

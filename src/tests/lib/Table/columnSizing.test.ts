@@ -13,6 +13,15 @@ const columns: ResizeColumn[] = [
 ]
 
 describe('bounded column sizing', () => {
+    test('fills the viewport proportionally without growing fixed controls or changing input widths', () => {
+        const fitted = fitColumnWidths(columns, 600, true)
+        expect(fitted.map((column) => column.size)).toEqual([324, 216, 60])
+        expect(columns.map((column) => column.size)).toEqual([180, 120, 60])
+        expect(fitColumnWidths(columns, Infinity, true)).toEqual(columns)
+        expect(
+            fitColumnWidths(columns, 1200, true).map((column) => column.size),
+        ).toEqual([600, 300, 60])
+    })
     test('borrows only available peer space, respecting fixed columns and minima', () => {
         const next = resizeColumnWidths(columns, 360, 'name', 1000)
         expect(next).toEqual({ name: 240, role: 60, actions: 60 })

@@ -29,30 +29,34 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         const viewport = element.current?.parentElement
         if (!viewport) return
         const measure = () => {
+            const minimum = element.current
+                ? element.current.ownerDocument.defaultView?.getComputedStyle(
+                      element.current,
+                  ).minWidth
+                : undefined
+            const minimumWidth = minimum?.endsWith('px')
+                ? Number.parseFloat(minimum)
+                : 0
             if (viewport.clientWidth > 0)
-                setAvailableWidth(viewport.clientWidth)
+                setAvailableWidth(
+                    Math.max(
+                        viewport.clientWidth,
+                        Number.isFinite(minimumWidth) ? minimumWidth : 0,
+                    ),
+                )
         }
         measure()
         if (typeof ResizeObserver === 'undefined') return
         const observer = new ResizeObserver(measure)
         observer.observe(viewport)
+        if (element.current) observer.observe(element.current)
         return () => observer.disconnect()
     }, [enabled])
     useLayoutEffect(() => {
         if (!enabled || ready || !element.current) return
-        const measured: Record<string, number> = {}
-        for (const row of element.current.tHead?.rows ?? []) {
-            for (const header of row.cells) {
-                const id = header.dataset.columnId
-                const column = id ? table.getColumn(id) : undefined
-                if (column && column.columns.length === 0)
-                    measured[column.id] =
-                        header.getBoundingClientRect().width || column.getSize()
-            }
-        }
-        table.setColumnSizing((current) => ({ ...measured, ...current }))
+        // Configured widths are weights; mounting must not overwrite them or persist a synthetic resize.
         setReady(true)
-    }, [enabled, ready, table])
+    }, [enabled, ready])
     const widths = fitColumnWidths(
         columns.map((column) => ({
             id: column.id,
@@ -68,6 +72,7 @@ export function useTableColumnResizeLogic<TData extends RowData>(
             resizable: column.getCanResize(),
         })),
         availableWidth - extraWidth,
+        Object.keys(table.state.columnSizing).length === 0,
     ).map((column) => ({ id: column.id, width: column.size }))
     return {
         state: {

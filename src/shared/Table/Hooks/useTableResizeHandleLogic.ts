@@ -46,6 +46,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
             resizable: item.getCanResize(),
         })),
         availableWidth,
+        Object.keys(table.state.columnSizing).length === 0,
     )
     const fitted = columns.find((item) => item.id === column.id)
     const min = fitted?.min ?? column.columnDef.minSize ?? 20
@@ -87,7 +88,11 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 .direction === 'rtl'
                 ? -1
                 : 1
-        const startColumns = fitColumnWidths(columns, availableWidthRef.current)
+        const startColumns = fitColumnWidths(
+            columns,
+            availableWidthRef.current,
+            Object.keys(table.state.columnSizing).length === 0,
+        )
         const startSize =
             startColumns.find((item) => item.id === column.id)?.size ?? size
         const contextWindow = contextDocument.defaultView

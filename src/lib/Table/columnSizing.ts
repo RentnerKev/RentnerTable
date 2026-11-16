@@ -10,11 +10,38 @@ export interface ResizeColumn {
 export function fitColumnWidths(
     columns: readonly ResizeColumn[],
     available: number,
+    fill = false,
 ): ResizeColumn[] {
     const fitted = columns.map((column) => ({ ...column }))
     const total = fitted.reduce((sum, column) => sum + column.size, 0)
     const budget = Math.max(0, available)
-    if (total <= budget) return fitted
+    if (total <= budget) {
+        if (fill && Number.isFinite(budget)) {
+            let remaining = budget - total
+            let growing = fitted.filter(
+                (column) => column.resizable && column.size < column.max,
+            )
+            while (remaining > 0.001 && growing.length > 0) {
+                const weight = growing.reduce(
+                    (sum, column) => sum + Math.max(1, column.size),
+                    0,
+                )
+                let distributed = 0
+                for (const column of growing) {
+                    const growth = Math.min(
+                        column.max - column.size,
+                        (remaining * Math.max(1, column.size)) / weight,
+                    )
+                    column.size += growth
+                    distributed += growth
+                }
+                if (distributed <= 0) break
+                remaining -= distributed
+                growing = growing.filter((column) => column.size < column.max)
+            }
+        }
+        return fitted
+    }
 
     const capacity = fitted.reduce(
         (sum, column) =>
