@@ -151,7 +151,11 @@ function normalizeField(
             for (let index = 0; index < value.length; index++) {
                 const entry = ownValue(value, String(index))
                 if (typeof entry !== 'string') return invalid
-                if (field === 'columnOrder' && (!entry || !isSafeKey(entry) || result.includes(entry))) return invalid
+                if (
+                    field === 'columnOrder' &&
+                    (!entry || !isSafeKey(entry) || result.includes(entry))
+                )
+                    return invalid
                 result.push(entry)
             }
             return result
