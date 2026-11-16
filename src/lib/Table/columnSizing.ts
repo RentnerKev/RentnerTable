@@ -18,18 +18,26 @@ export function fitColumnWidths(
     if (total <= budget) {
         if (fill && Number.isFinite(budget)) {
             let remaining = budget - total
-            let growing = fitted.filter(column => column.resizable && column.size < column.max)
+            let growing = fitted.filter(
+                (column) => column.resizable && column.size < column.max,
+            )
             while (remaining > 0.001 && growing.length > 0) {
-                const weight = growing.reduce((sum, column) => sum + Math.max(1, column.size), 0)
+                const weight = growing.reduce(
+                    (sum, column) => sum + Math.max(1, column.size),
+                    0,
+                )
                 let distributed = 0
                 for (const column of growing) {
-                    const growth = Math.min(column.max - column.size, remaining * Math.max(1, column.size) / weight)
+                    const growth = Math.min(
+                        column.max - column.size,
+                        (remaining * Math.max(1, column.size)) / weight,
+                    )
                     column.size += growth
                     distributed += growth
                 }
                 if (distributed <= 0) break
                 remaining -= distributed
-                growing = growing.filter(column => column.size < column.max)
+                growing = growing.filter((column) => column.size < column.max)
             }
         }
         return fitted

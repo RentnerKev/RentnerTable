@@ -88,7 +88,11 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 .direction === 'rtl'
                 ? -1
                 : 1
-        const startColumns = fitColumnWidths(columns, availableWidthRef.current, Object.keys(table.state.columnSizing).length === 0)
+        const startColumns = fitColumnWidths(
+            columns,
+            availableWidthRef.current,
+            Object.keys(table.state.columnSizing).length === 0,
+        )
         const startSize =
             startColumns.find((item) => item.id === column.id)?.size ?? size
         const contextWindow = contextDocument.defaultView
