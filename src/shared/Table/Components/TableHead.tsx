@@ -177,9 +177,9 @@ export function TableHead<TData extends RowData>({
                                         aria-hidden="true"
                                         data-table-header-divider=""
                                         className={[
-                                            'pointer-events-none absolute inset-y-3 end-[0.75px]',
+                                            'pointer-events-none absolute inset-y-2 end-[0.75px]',
                                             getTableSlotClassName(
-                                                'w-[1.5px] bg-rentner-border',
+                                                'w-[1.5px] bg-rentner-muted/50',
                                                 classNames?.headerDivider,
                                             ),
                                         ].join(' ')}

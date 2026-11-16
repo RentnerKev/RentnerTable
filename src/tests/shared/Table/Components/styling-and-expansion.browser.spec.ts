@@ -53,3 +53,56 @@ test('shows compact strong sort icons, header dividers and a side marker on the 
     expect(marker.width).toBe('2px')
     expect(marker.background).not.toBe('rgba(0, 0, 0, 0)')
 })
+
+test('centers a longer resize marker and keeps host focus outlines off the drag area', async ({
+    page,
+}) => {
+    await page
+        .getByRole('button', { name: 'Resize columns', exact: true })
+        .click()
+    await page.addStyleTag({
+        content:
+            ':focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }',
+    })
+    const handle = page.getByRole('separator', {
+        name: 'Resize Member',
+        exact: true,
+    })
+    await handle.focus()
+    await expect(handle).toHaveCSS('outline-style', 'none')
+    await expect(handle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    const geometry = await handle.evaluate((element) => {
+        const divider = element.parentElement?.querySelector(
+            '[data-table-header-divider]',
+        )
+        if (!divider) throw new Error('Missing header divider')
+        const gripBox = element.getBoundingClientRect()
+        const lineBox = divider.getBoundingClientRect()
+        return {
+            handleHeight: gripBox.height,
+            lineHeight: lineBox.height,
+            centerXDifference: Math.abs(
+                gripBox.right - 1.5 - (lineBox.left + lineBox.width / 2),
+            ),
+            centerYDifference: Math.abs(
+                gripBox.top +
+                    gripBox.height / 2 -
+                    (lineBox.top + lineBox.height / 2),
+            ),
+            backgroundSize: getComputedStyle(element).backgroundSize,
+            backgroundImage: getComputedStyle(element).backgroundImage,
+        }
+    })
+    expect(
+        Math.abs(geometry.lineHeight - (geometry.handleHeight - 16)),
+    ).toBeLessThanOrEqual(1)
+    expect(geometry.centerXDifference).toBeLessThanOrEqual(0.25)
+    expect(geometry.centerYDifference).toBeLessThanOrEqual(0.5)
+    expect(geometry.backgroundSize).toMatch(/^3px /)
+    expect(geometry.backgroundImage).toContain('linear-gradient')
+    const previous = Number(await handle.getAttribute('aria-valuenow'))
+    await handle.press('ArrowRight')
+    expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(
+        previous,
+    )
+})
