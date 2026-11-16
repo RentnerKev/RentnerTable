@@ -1,5 +1,13 @@
 # RentnerTable usage
 
+Resizable tables use configured column widths for initial proportions and fill
+available space across resizable columns. Mounting does not emit a sizing change
+or persist inferred content widths. Explicit saved sizing remains authoritative.
+
+Use `searchMaxLength` when an existing server search accepts more than the
+default 200 characters. This also applies to `DataTableToolbar.options` in custom
+compositions.
+
 ## Column order
 
 Use stable column IDs and `tableOptions.state.columnOrder` with

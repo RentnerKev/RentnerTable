@@ -119,6 +119,8 @@ export type DataTableProps<TData extends RowData> =
             icon?: ReactNode
             searchable?: boolean
             searchPlaceholder?: string
+            /** Defaults to 200; match an application's existing server search contract. */
+            searchMaxLength?: number
             columnFilters?: boolean
             columnVisibility?: boolean
             isRefreshing?: boolean
@@ -202,6 +204,7 @@ export type DataTableToolbarProps<TData extends RowData> = {
         | 'icon'
         | 'searchable'
         | 'searchPlaceholder'
+        | 'searchMaxLength'
         | 'columnFilters'
         | 'columnVisibility'
         | 'toolbarActions'
