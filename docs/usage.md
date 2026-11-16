@@ -1,5 +1,17 @@
 # RentnerTable usage
 
+## Column order
+
+Use stable column IDs and `tableOptions.state.columnOrder` with
+`onColumnOrderChange` for application-controlled column ordering. The native
+table instance also exposes `setColumnOrder` and `resetColumnOrder` when composing
+with `useDataTableLogic` or using `toolbarActions`.
+
+Include `columnOrder` in a persistence field allowlist to save and restore it.
+Snapshots remain version 1 and older snapshots remain valid. On restoration,
+obsolete IDs are ignored and newly added columns are appended. Invalid,
+duplicate, empty and unsafe IDs are rejected during snapshot normalization.
+
 The package supports React 19, React DOM 19, Tailwind CSS 4 and TanStack Table 9. Import `@rentnerkev/table/tailwind.css` after Tailwind; see the [README quick start](../README.md#quick-start) for a complete typed component.
 
 ## Components and entry points

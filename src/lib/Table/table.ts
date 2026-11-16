@@ -1,6 +1,7 @@
 import {
     createColumnHelper,
     columnFilteringFeature,
+    columnOrderingFeature,
     columnSizingFeature,
     columnResizingFeature,
     columnVisibilityFeature,
@@ -28,6 +29,7 @@ const columnMeta: TableColumnMeta = {}
 
 export const rentnerTableFeatures = tableFeatures({
     columnMeta,
+    columnOrderingFeature,
     columnSizingFeature,
     columnResizingFeature,
     columnVisibilityFeature,

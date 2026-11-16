@@ -16,6 +16,7 @@ export type TableStateSnapshot = {
         globalFilter: string
         columnVisibility: Record<string, boolean>
         columnSizing: Record<string, number>
+        columnOrder: string[]
         pagination: { pageIndex: number; pageSize: number }
         rowSelection: Record<string, boolean>
         expanded: true | Record<string, boolean>
