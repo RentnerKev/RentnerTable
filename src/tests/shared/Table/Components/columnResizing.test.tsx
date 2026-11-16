@@ -48,14 +48,37 @@ const resizeTableView = (
 
 describe('bounded resize interactions', () => {
     test('honors a native table minimum width inside a narrower scrolling viewport', () => {
-        const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth')
-        Object.defineProperty(HTMLElement.prototype, 'clientWidth', {configurable:true,get(){return this.hasAttribute('data-rentner-table-container')?300:0}})
+        const original = Object.getOwnPropertyDescriptor(
+            HTMLElement.prototype,
+            'clientWidth',
+        )
+        Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+            configurable: true,
+            get() {
+                return this.hasAttribute('data-rentner-table-container')
+                    ? 300
+                    : 0
+            },
+        })
         try {
-            render(<DataTable data={[{name:'Kevin',role:'Engineer',team:'Core'}]} columns={columns} getRowId={row=>row.name} resizableColumns tableProps={{style:{minWidth:800}}} />)
+            render(
+                <DataTable
+                    data={[{ name: 'Kevin', role: 'Engineer', team: 'Core' }]}
+                    columns={columns}
+                    getRowId={(row) => row.name}
+                    resizableColumns
+                    tableProps={{ style: { minWidth: 800 } }}
+                />,
+            )
             expect(screen.getByRole('table').style.width).toBe('800px')
         } finally {
-            if(original)Object.defineProperty(HTMLElement.prototype,'clientWidth',original)
-            else Reflect.deleteProperty(HTMLElement.prototype,'clientWidth')
+            if (original)
+                Object.defineProperty(
+                    HTMLElement.prototype,
+                    'clientWidth',
+                    original,
+                )
+            else Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth')
         }
     })
     test('does not persist intrinsic content widths when a resizable table mounts', () => {
