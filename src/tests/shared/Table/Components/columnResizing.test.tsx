@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, test, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { createTableColumnHelper, DataTable } from '../../../../index.ts'
@@ -47,6 +47,12 @@ const resizeTableView = (
 )
 
 describe('bounded resize interactions', () => {
+    test('does not persist intrinsic content widths when a resizable table mounts', () => {
+        const changed = mock()
+        render(<DataTable data={[{name:'Very long intrinsic content '.repeat(10),role:'Engineer',team:'Core'}]} columns={columns} getRowId={row=>row.name} resizableColumns tableOptions={{onColumnSizingChange:changed}} />)
+        expect(changed).not.toHaveBeenCalled()
+        expect(screen.getByRole('separator', {name:/Resize Name|Name.*resize/i}).getAttribute('aria-valuenow')).toBe('150')
+    })
     test('keeps resize observers connected while updating widths, visibility and utility columns', () => {
         const originalObserver = globalThis.ResizeObserver
         const viewportWidth = Object.getOwnPropertyDescriptor(
