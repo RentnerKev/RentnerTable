@@ -58,6 +58,9 @@ export function TeamTable({
                             ? 'rentner-table:playground:team'
                             : undefined
                     }
+                    headerDividers
+                    expandOnRowClick
+                    onRowDoubleClick={handler.handleRowDoubleClick}
                     onRowClick={handler.handleRowClick}
                     onRowContextMenu={handler.handleRowContextMenu}
                     tableProps={{

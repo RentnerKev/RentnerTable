@@ -166,3 +166,5 @@ MIT © RentnerKev
 ## Community
 
 See [Contributing](.github/CONTRIBUTING.md), the [Code of Conduct](.github/CODE_OF_CONDUCT.md), [Support](.github/SUPPORT.md), and the [Security Policy](SECURITY.md).
+
+Whole-row expansion is opt-in with `expandOnRowClick`. See the [styling and interaction guide](docs/usage.md#styling-defaults-and-visual-slots) for provider defaults, visual slots, header dividers and typed double-click callbacks.

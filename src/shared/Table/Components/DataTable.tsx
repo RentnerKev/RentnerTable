@@ -1,6 +1,7 @@
 'use client'
 
 import type { RowData } from '@tanstack/react-table'
+import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { useDataTableLogic } from '../Hooks/useDataTableLogic.ts'
 import { DataTableToolbar } from './DataTableToolbar.tsx'
 import { DataTablePagination } from './DataTablePagination.tsx'
@@ -16,27 +17,32 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
         handler,
         refs: { root },
     } = useDataTableLogic(props)
+    const { state: styles } = useTableStyles(props)
     return (
-        <TableProvider portalContainer={state.portalContainer}>
+        <TableProvider
+            portalContainer={state.portalContainer}
+            classNames={styles.classNames}
+            headerDividers={styles.headerDividers}
+        >
             <section
                 ref={root}
                 data-rentner-data-table=""
                 aria-labelledby={`${state.id}-title`}
-                className={`min-w-0 rounded-rentner-control border border-rentner-border bg-rentner-surface text-rentner-foreground ${props.classNames?.root ?? ''} ${props.className ?? ''}`}
+                className={`min-w-0 rounded-rentner-control border border-rentner-border bg-rentner-surface text-rentner-foreground ${styles.classNames.root ?? ''} ${props.className ?? ''}`}
             >
                 <DataTableToolbar
                     table={table}
                     state={state}
                     handler={handler}
                     options={props}
-                    className={props.classNames?.toolbar}
+                    className={styles.classNames.toolbar}
                 />
                 {props.columnFilters !== false && state.showFilters && (
                     <DataTableFilters
                         state={state}
                         locale={props.locale ?? 'en'}
                         disabled={props.isLoading}
-                        className={props.classNames?.filters}
+                        className={styles.classNames.filters}
                     />
                 )}
                 <TableSurface
@@ -58,7 +64,9 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     size={props.size}
                     striped={props.striped ?? true}
                     stickyHeader={props.stickyHeader}
-                    classNames={props.classNames}
+                    classNames={styles.classNames}
+                    headerDividers={styles.headerDividers}
+                    expandOnRowClick={props.expandOnRowClick}
                     selection={state}
                     onSelectPage={handler.handleSelectPage}
                     getRowLabel={props.getRowLabel}
@@ -81,7 +89,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     locale={props.locale ?? 'en'}
                     pagination={props.pagination !== false}
                     disabled={props.isLoading}
-                    className={props.classNames?.footer}
+                    className={styles.classNames.footer}
                 />
             </section>
         </TableProvider>

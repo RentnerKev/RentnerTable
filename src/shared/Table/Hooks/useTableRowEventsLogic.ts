@@ -1,7 +1,10 @@
 import type { MouseEvent } from 'react'
 import type { RowData } from '@tanstack/react-table'
 import type { TableRow } from '../Types/dataTable.types.ts'
-import type { TableRowEvents } from '../Types/interaction.types.ts'
+import type {
+    TableRowEvents,
+    TableRowEventOptions,
+} from '../Types/interaction.types.ts'
 import { isTableEventElement } from '../../../lib/Table/events.ts'
 
 function isControl(event: MouseEvent<HTMLTableRowElement>): boolean {
@@ -17,15 +20,34 @@ function isControl(event: MouseEvent<HTMLTableRowElement>): boolean {
 export function useTableRowEventsLogic<TData extends RowData>(
     row: TableRow<TData>,
     callbacks: TableRowEvents<TData>,
+    options: TableRowEventOptions = {},
 ) {
     return {
         handler: {
             handleClick: (event: MouseEvent<HTMLTableRowElement>) => {
-                if (!event.defaultPrevented && !isControl(event))
-                    callbacks.onRowClick?.(row, event)
+                if (
+                    event.defaultPrevented ||
+                    isControl(event) ||
+                    options.isLoading
+                )
+                    return
+                callbacks.onRowClick?.(row, event)
+                // Native double clicks contain two click events; expand only once.
+                if (
+                    !event.defaultPrevented &&
+                    options.expandOnRowClick &&
+                    event.detail <= 1 &&
+                    row.getCanExpand()
+                ) {
+                    row.toggleExpanded()
+                }
             },
             handleDoubleClick: (event: MouseEvent<HTMLTableRowElement>) => {
-                if (!event.defaultPrevented && !isControl(event))
+                if (
+                    !event.defaultPrevented &&
+                    !isControl(event) &&
+                    !options.isLoading
+                )
                     callbacks.onRowDoubleClick?.(row, event)
             },
             handleContextMenu: (event: MouseEvent<HTMLTableRowElement>) => {

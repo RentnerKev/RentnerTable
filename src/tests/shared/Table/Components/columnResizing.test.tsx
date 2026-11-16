@@ -82,7 +82,7 @@ describe('bounded resize interactions', () => {
             })
             expect(handle.getAttribute('aria-valuemax')).toBe('430')
             const initial = observers.length
-            expect(initial).toBe(3)
+            expect(initial).toBe(1)
             for (let index = 0; index < 10; index++) rerender(resizeTableView())
             fireEvent.mouseDown(handle, { button: 0, clientX: 100 })
             for (let index = 0; index < 10; index++)
@@ -98,7 +98,7 @@ describe('bounded resize interactions', () => {
             expect(observers).toHaveLength(initial)
             expect(
                 observers.filter((observer) => observer.disconnected),
-            ).toHaveLength(1)
+            ).toHaveLength(0)
             width = 400
             act(() => {
                 for (const observer of observers)
@@ -130,7 +130,7 @@ describe('bounded resize interactions', () => {
         }
     })
 
-    test('preserves controlled onEnd sizing, group leaves, inherited limits, RTL and touch cleanup', () => {
+    test('preserves controlled onEnd sizing, group leaves, inherited limits, RTL and touch cleanup', async () => {
         const viewportWidth = Object.getOwnPropertyDescriptor(
             HTMLElement.prototype,
             'clientWidth',
@@ -187,6 +187,13 @@ describe('bounded resize interactions', () => {
             ).toBe(false)
             expect(document.activeElement).toBe(handle)
             fireEvent.mouseMove(document, { clientX: -1000 })
+            await act(async () => {
+                await new Promise<void>((resolve) => {
+                    window.requestAnimationFrame(() => resolve())
+                })
+            })
+            expect(handle.style.transform).toBe('translateX(60px)')
+            expect(handle.getAttribute('aria-valuenow')).toBe('160')
             expect(handle.getAttribute('data-resizing')).toBe('true')
             expect(changes).toHaveLength(count)
             fireEvent.mouseUp(document, { clientX: -1000 })
@@ -225,4 +232,114 @@ describe('bounded resize interactions', () => {
             else Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth')
         }
     })
+})
+
+test('coalesces movement without layout reads and flushes or cancels queued work', () => {
+    const viewportWidth = Object.getOwnPropertyDescriptor(
+        HTMLElement.prototype,
+        'clientWidth',
+    )
+    const originalRequest = window.requestAnimationFrame
+    const originalCancel = window.cancelAnimationFrame
+    const frames = new Map<number, FrameRequestCallback>()
+    let frameId = 0
+    let widthReads = 0
+    let sizingChanges = 0
+    window.requestAnimationFrame = (callback) => {
+        frames.set(++frameId, callback)
+        return frameId
+    }
+    window.cancelAnimationFrame = (id) => {
+        frames.delete(id)
+    }
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+        configurable: true,
+        get() {
+            widthReads++
+            return this.hasAttribute('data-rentner-table-container') ? 600 : 0
+        },
+    })
+    function Controlled() {
+        const [sizing, setSizing] = useState<Record<string, number>>({
+            name: 150,
+            role: 150,
+            team: 80,
+        })
+        return (
+            <DataTable
+                data={[{ name: 'Kevin', role: 'Engineer', team: 'Core' }]}
+                columns={columns}
+                resizableColumns
+                tableOptions={{
+                    state: { columnSizing: sizing },
+                    onColumnSizingChange: (updater) => {
+                        sizingChanges++
+                        setSizing(updater)
+                    },
+                }}
+            />
+        )
+    }
+    try {
+        const { unmount } = render(<Controlled />)
+        const handle = screen.getByRole('separator', { name: 'Resize Name' })
+        fireEvent.mouseDown(handle, { button: 0, clientX: 100 })
+        const initialChanges = sizingChanges
+        widthReads = 0
+        for (let index = 1; index <= 240; index++) {
+            fireEvent.mouseMove(document, { clientX: 100 + index / 2 })
+        }
+        expect(sizingChanges).toBe(initialChanges)
+        expect(frames.size).toBe(1)
+        act(() => {
+            const pending = [...frames.values()]
+            frames.clear()
+            for (const callback of pending) callback(0)
+        })
+        expect(sizingChanges).toBe(initialChanges + 1)
+        expect(handle.getAttribute('aria-valuenow')).toBe('270')
+        expect(widthReads).toBe(0)
+
+        // Releasing before the next paint must commit the release position.
+        fireEvent.mouseMove(document, { clientX: 230 })
+        expect(frames.size).toBe(1)
+        fireEvent.mouseUp(document, { clientX: 240 })
+        expect(handle.getAttribute('aria-valuenow')).toBe('290')
+        expect(sizingChanges).toBe(initialChanges + 2)
+        expect(frames.size).toBe(0)
+
+        fireEvent.mouseDown(handle, { button: 0, clientX: 100 })
+        fireEvent.mouseMove(document, { clientX: 150 })
+        expect(frames.size).toBe(1)
+        fireEvent(window, new Event('blur'))
+        expect(frames.size).toBe(0)
+        expect(handle.hasAttribute('data-resizing')).toBe(false)
+        expect(handle.getAttribute('aria-valuenow')).toBe('290')
+
+        fireEvent.touchStart(handle, { touches: [{ clientX: 100 }] })
+        fireEvent.touchMove(document, { touches: [{ clientX: 120 }] })
+        expect(frames.size).toBe(1)
+        fireEvent.touchCancel(document)
+        expect(frames.size).toBe(0)
+        expect(sizingChanges).toBe(initialChanges + 2)
+
+        fireEvent.mouseDown(handle, { button: 0, clientX: 100 })
+        fireEvent.mouseMove(document, { clientX: 150 })
+        expect(frames.size).toBe(1)
+        unmount()
+        expect(frames.size).toBe(0)
+        fireEvent.mouseUp(document, { clientX: 150 })
+        expect(sizingChanges).toBe(initialChanges + 2)
+    } finally {
+        cleanup()
+        window.requestAnimationFrame = originalRequest
+        window.cancelAnimationFrame = originalCancel
+        if (viewportWidth)
+            Object.defineProperty(
+                HTMLElement.prototype,
+                'clientWidth',
+                viewportWidth,
+            )
+        else Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth')
+    }
 })

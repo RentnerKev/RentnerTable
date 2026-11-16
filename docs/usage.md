@@ -59,7 +59,9 @@ export default function ReusableTeam() {
 }
 ```
 
-Resize a leaf column at its edge. Width stays within the available viewport: growing a column borrows available space from resizable peers until their minimum sizes or the configured maximum is reached. Arrow keys change width by 10 pixels, Shift+Arrow by 50; Home or double-click resets its configured size, and End selects its available maximum. `minSize`, `maxSize` and `enableResizing` configure each column. When a viewport cannot contain the configured minima, rendered widths fit proportionally without replacing persisted size preferences. Native `tableOptions.columnResizeMode`, `columnResizeDirection`, controlled `state.columnSizing` and `onColumnSizingChange` remain available on `DataTable`.
+Resize a leaf column at its edge. Width stays within the available viewport: growing a column consumes free viewport space, then borrows only from following resizable columns until their minimum sizes or the configured maximum is reached. Earlier columns keep their widths and boundaries. Shrinking moves only the active edge and subsequent columns. The last column can grow only into unused viewport space. This follows rendered column order, including RTL layouts. Arrow keys change width by 10 pixels, Shift+Arrow by 50; Home or double-click resets its configured size, and End selects its available maximum. `minSize`, `maxSize` and `enableResizing` configure each column. When a viewport cannot contain the configured minima, rendered widths fit proportionally without replacing persisted size preferences. Native `tableOptions.columnResizeMode`, `columnResizeDirection`, controlled `state.columnSizing` and `onColumnSizingChange` remain available on `DataTable`.
+
+Drag updates are coalesced to one update per animation frame and use the shared viewport measurement instead of reading layout for every move. The release position is applied immediately, including quick drags before the next frame. Touch cancellation, window blur, and unmount discard pending updates. Controlled sizing callbacks keep the same value/updater contract.
 
 Drag a row by its handle, hold the handle briefly on touch devices, or use Space, arrow keys and Space/Enter to move it with the keyboard. Escape and drops outside the table cancel. The preview stays within the visible table width and includes expanded details. Clear sorting before reordering; dragging is disabled while sorting is active or the table is loading or showing an error.
 
@@ -270,3 +272,72 @@ Pagination bounds rendered rows. Row virtualization, fetching, CSV export, editi
 ## Updating from 0.0.2 to 1.0.0
 
 React 19 and Tailwind CSS 4 remain required, and existing public prop names remain available. Resizing now fits the viewport, and built-in filters use a responsive panel below the toolbar instead of header cells; update application CSS that targeted the old filter row. The additive message fields `anyDate` and `noResultsFor` are optional. Resizing, row dragging and persistence remain opt-in. Preference snapshots start at version 1; adapt custom storage responses to that versioned format.
+
+## Styling defaults and visual slots
+
+`TableProvider` supplies shared `classNames` and `headerDividers` defaults to
+`DataTable`, `Table` and custom compositions. Local props override the nearest
+provider; nested providers inherit unspecified values. An undefined slot inherits,
+while an empty string explicitly removes that slot's visual defaults.
+
+Existing container slots (`root`, `toolbar`, `filters`, `viewport`, `table`,
+`header`, `headerCell`, `row`, `cell`, `footer`) remain additive for compatibility.
+New visual slots **replace** their visual defaults; structural layout, semantic
+HTML, event handlers, disabled behavior and keyboard focus remain in place.
+
+| Area            | Visual slots                                                                                                                                   |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared controls | `button`, `buttonActive`                                                                                                                       |
+| Toolbar         | `filterButton`, `filterButtonActive`, `filterBadge`, `columnVisibilityButton`, `resetFiltersButton`, `toolbarControls`, `title`, `description` |
+| Sorting         | `sortButton`, `sortIcon`, `headerDivider`                                                                                                      |
+| Pagination      | `paginationButton`, `paginationIcon`, `paginationNav`, `pageInfo`, `pageSizeSelect`                                                            |
+| Details         | `expandButton`, `expandIcon`, `expandedRow`, `expandedCell`, `expandedContent`                                                                 |
+
+A specific control slot takes precedence over `button`. Its active slot takes
+precedence over `buttonActive`. Supply a complete visual style for replacement
+slots, including desired padding, dimensions, colors and borders.
+
+```tsx
+<TableProvider
+    headerDividers
+    classNames={{
+        sortIcon: 'size-4.5 stroke-3 text-rentner-accent',
+        filterButtonActive:
+            'before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-rentner-accent',
+    }}
+>
+    <DataTable data={members} columns={columns} getRowId={(row) => row.id} />
+</TableProvider>
+```
+
+The filter control uses a neutral active surface with a side accent by default.
+Sort indicators are SVG icons, distinct from pagination arrows.
+`headerDividers` adds optional decorative separators between column headings.
+
+## Expand from the whole row and handle double clicks
+
+`expandOnRowClick` is opt-in on `DataTable` and `TableSurface`. With
+`renderExpandedRow`, clicking text, any ordinary cell or blank row space toggles
+details. The detail button remains available for keyboard users. Native controls,
+links, editable elements and `data-no-row-click` descendants retain their own
+behavior. Expansion respects `getRowCanExpand`, loading state and controlled
+`expanded` / `onExpandedChange`.
+
+```tsx
+<DataTable
+    data={entries}
+    columns={columns}
+    getRowId={(entry) => entry.id}
+    expandOnRowClick
+    renderExpandedRow={(row) => <EntryDetails entry={row.original} />}
+    onRowDoubleClick={(row, event) => onOpenEntry(row.original, event)}
+/>
+```
+
+`onRowDoubleClick` and `onCellDoubleClick` already receive typed rows/cells and
+the React mouse event. Normal browser ordering applies: a double click includes
+two click events, followed by the double-click event. Automatic row expansion
+toggles only for the first click in that sequence, preventing an immediate
+open/close. Row and cell click handlers run before automatic expansion and can
+call `event.preventDefault()` to veto it. Cell handlers run before row handlers;
+controls are excluded from row click and double-click callbacks.

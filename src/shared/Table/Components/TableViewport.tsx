@@ -1,6 +1,7 @@
 'use client'
 
 import type { RowData } from '@tanstack/react-table'
+import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { TableHead } from './TableHead.tsx'
 import { TableBody } from './TableBody.tsx'
 import { TableStatus } from './TableStatus.tsx'
@@ -25,7 +26,9 @@ export function TableViewport<TData extends RowData>({
     containerClassName = '',
     embedded = false,
     stickyHeader,
-    classNames,
+    classNames: localClassNames,
+    headerDividers,
+    expandOnRowClick,
     rowClassName,
     selection,
     onSelectPage,
@@ -47,6 +50,11 @@ export function TableViewport<TData extends RowData>({
     onCellContextMenu,
     ...tableProps
 }: TableSurfaceProps<TData>) {
+    const { state: styles } = useTableStyles({
+        classNames: localClassNames,
+        headerDividers,
+    })
+    const classNames = styles.classNames
     const {
         state: sizing,
         refs: { table: tableRef },
@@ -108,7 +116,9 @@ export function TableViewport<TData extends RowData>({
                     filters={filters}
                     classNames={classNames}
                     stickyHeader={stickyHeader}
+                    headerDividers={styles.headerDividers}
                     resizableColumns={resizableColumns}
+                    resizeAvailableWidth={sizing.availableWidth}
                     reorderableRows={reorderableRows}
                 />
                 {(error != null && error !== false) ||
@@ -142,6 +152,7 @@ export function TableViewport<TData extends RowData>({
                         resizableColumns={resizableColumns}
                         reorderableRows={reorderableRows}
                         onRowClick={onRowClick}
+                        expandOnRowClick={expandOnRowClick}
                         onRowDoubleClick={onRowDoubleClick}
                         onRowContextMenu={onRowContextMenu}
                         onCellClick={onCellClick}

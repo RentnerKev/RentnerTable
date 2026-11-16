@@ -48,6 +48,9 @@ export interface TeamTableLogicResult {
     refs: { target: (element: HTMLDivElement | null) => void }
     handler: {
         handleRowClick: NonNullable<TableRowEvents<Member>['onRowClick']>
+        handleRowDoubleClick: NonNullable<
+            TableRowEvents<Member>['onRowDoubleClick']
+        >
         handleRowContextMenu: NonNullable<
             TableRowEvents<Member>['onRowContextMenu']
         >

@@ -78,12 +78,14 @@ export type TableDataRowProps<TData extends RowData> = Omit<
 export interface ColumnResizeLogicResult {
     state: {
         fixed: boolean
+        availableWidth: number
         width: number
         widths: { id: string; width: number }[]
     }
     refs: { table: Ref<HTMLTableElement> }
 }
 export interface TableColumnResizeHandleProps<TData extends RowData> {
+    availableWidth: number
     table: RentnerTableInstance<TData>
     header: Header<typeof rentnerTableFeatures, TData, unknown>
     messages: TableMessages
@@ -136,4 +138,9 @@ export interface TableDragGroupProps {
     id: string
     label: string
     children: (handle: ReactNode) => ReactNode
+}
+
+export interface TableRowEventOptions {
+    expandOnRowClick?: boolean
+    isLoading?: boolean
 }

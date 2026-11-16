@@ -5,6 +5,7 @@ import type {
     TablePersistenceStatus,
     TableStateController,
 } from './persistence.types.ts'
+import type { TableStyleOptions, TableButtonSlot } from './styling.types.ts'
 import type { MenuItem } from '@rentnerkev/menu'
 import type { TableDateRange } from './column.types.ts'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
@@ -47,6 +48,30 @@ export interface DataTableClassNames {
     row?: string
     cell?: string
     footer?: string
+    /** New visual slots replace defaults; existing container slots remain additive. */
+    button?: string
+    buttonActive?: string
+    filterButton?: string
+    filterButtonActive?: string
+    filterBadge?: string
+    columnVisibilityButton?: string
+    resetFiltersButton?: string
+    paginationButton?: string
+    paginationIcon?: string
+    paginationNav?: string
+    pageInfo?: string
+    pageSizeSelect?: string
+    sortButton?: string
+    sortIcon?: string
+    headerDivider?: string
+    expandButton?: string
+    expandIcon?: string
+    expandedRow?: string
+    expandedCell?: string
+    expandedContent?: string
+    toolbarControls?: string
+    title?: string
+    description?: string
 }
 
 export type DataTableLogicOptions<TData extends RowData> = Pick<
@@ -107,6 +132,9 @@ export type DataTableProps<TData extends RowData> =
             stickyHeader?: boolean
             className?: string
             classNames?: DataTableClassNames
+            headerDividers?: boolean
+            /** Toggle expandable rows from non-interactive row content. Defaults to false. */
+            expandOnRowClick?: boolean
             toolbarActions?:
                 ReactNode | ((context: DataTableContext<TData>) => ReactNode)
             bulkActions?: (context: DataTableContext<TData>) => ReactNode
@@ -207,6 +235,8 @@ export type TableSurfaceProps<TData extends RowData> = Omit<
         containerClassName?: string
         embedded?: boolean
         stickyHeader?: boolean
+        headerDividers?: boolean
+        expandOnRowClick?: boolean
         classNames?: DataTableClassNames
         rowClassName?: DataTableProps<TData>['rowClassName']
         selection?: DataTableLogicResult<TData>['state']
@@ -224,6 +254,7 @@ export type TableSurfaceProps<TData extends RowData> = Omit<
 export type TableButtonProps = ComponentPropsWithRef<'button'> & {
     active?: boolean
     iconOnly?: boolean
+    slot?: TableButtonSlot
 }
 export interface TableCheckboxProps {
     checked: boolean
@@ -275,7 +306,8 @@ export type TableHeadProps<TData extends RowData> = Pick<
     | 'stickyHeader'
     | 'resizableColumns'
     | 'reorderableRows'
->
+    | 'headerDividers'
+> & { resizeAvailableWidth?: number }
 export type TableBodyProps<TData extends RowData> = Pick<
     TableSurfaceProps<TData>,
     | 'table'
@@ -291,6 +323,7 @@ export type TableBodyProps<TData extends RowData> = Pick<
     | 'reorderableRows'
     | 'resizableColumns'
     | 'onRowClick'
+    | 'expandOnRowClick'
     | 'onRowDoubleClick'
     | 'onRowContextMenu'
     | 'onCellClick'
@@ -325,7 +358,7 @@ export interface TableRowActionsProps {
     disabled?: boolean
 }
 
-export interface TableProviderProps {
+export interface TableProviderProps extends TableStyleOptions {
     children: ReactNode
     portalContainer?: Element | DocumentFragment | null
 }

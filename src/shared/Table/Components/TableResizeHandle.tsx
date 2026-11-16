@@ -29,12 +29,8 @@ export function TableResizeHandle<TData extends RowData>(
             onKeyDown={handler.handleKeyDown}
             style={{
                 transform: `translateX(${state.offset}px)`,
-                backgroundImage: 'linear-gradient(currentColor, currentColor)',
-                backgroundSize: '2px 45%',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
             }}
-            className="absolute inset-y-0 end-0 z-20 m-0 h-full w-3 touch-none cursor-col-resize select-none border-0 text-rentner-border outline-none hover:text-rentner-accent focus-visible:bg-rentner-accent/15 focus-visible:text-rentner-accent data-[resizing=true]:text-rentner-accent aria-disabled:cursor-default"
+            className="[background-image:linear-gradient(currentColor,currentColor)] [background-size:3px_calc((100%_-_var(--spacing)*6)*0.65)] bg-right bg-no-repeat rtl:bg-left absolute inset-y-0 end-0 z-20 m-0 h-full w-3 touch-none cursor-col-resize select-none border-0 text-rentner-muted/70 outline-none hover:text-rentner-accent focus-visible:bg-rentner-accent/15 focus-visible:text-rentner-accent data-[resizing=true]:text-rentner-accent aria-disabled:cursor-default"
         />
     )
 }

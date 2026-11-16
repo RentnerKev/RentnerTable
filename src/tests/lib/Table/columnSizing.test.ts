@@ -69,3 +69,61 @@ describe('bounded column sizing', () => {
         }
     })
 })
+
+describe('directional column resizing', () => {
+    const tenColumns: ResizeColumn[] = Array.from(
+        { length: 10 },
+        (_, index) => ({
+            id: 'column-' + index,
+            size: 100,
+            min: 60,
+            max: 300,
+            resizable: true,
+        }),
+    )
+
+    test('keeps the first six columns fixed when growing or shrinking column seven', () => {
+        for (const requested of [180, 60, 1000]) {
+            const next = resizeColumnWidths(
+                tenColumns,
+                1000,
+                'column-6',
+                requested,
+            )
+            for (let index = 0; index < 6; index++) {
+                expect(next['column-' + index]).toBe(100)
+            }
+            expect(next['column-6']).toBe(Math.min(220, requested))
+            expect(
+                Object.values(next).reduce((sum, width) => sum + width, 0),
+            ).toBeLessThanOrEqual(1000.00001)
+        }
+        expect(tenColumns.every((column) => column.size === 100)).toBe(true)
+    })
+
+    test('ignores earlier capacity and fixed trailing columns when calculating the maximum', () => {
+        const middle: ResizeColumn[] = [
+            { id: 'before', size: 300, min: 60, max: 600, resizable: true },
+            { id: 'active', size: 100, min: 60, max: 600, resizable: true },
+            { id: 'fixed', size: 100, min: 60, max: 600, resizable: false },
+            { id: 'after', size: 100, min: 80, max: 600, resizable: true },
+        ]
+        expect(getColumnResizeMaximum(middle, 600, 'active')).toBe(120)
+        expect(resizeColumnWidths(middle, 600, 'active', 400)).toEqual({
+            before: 300,
+            active: 120,
+            fixed: 100,
+            after: 80,
+        })
+    })
+
+    test('clamps the last column to free viewport space without borrowing from earlier columns', () => {
+        expect(getColumnResizeMaximum(tenColumns, 1000, 'column-9')).toBe(100)
+        expect(getColumnResizeMaximum(tenColumns, 1040, 'column-9')).toBe(140)
+        const next = resizeColumnWidths(tenColumns, 1040, 'column-9', 200)
+        expect(next['column-9']).toBe(140)
+        for (let index = 0; index < 9; index++)
+            expect(next['column-' + index]).toBe(100)
+        expect(resizeColumnWidths(tenColumns, 1000, 'missing', 200)).toEqual({})
+    })
+})

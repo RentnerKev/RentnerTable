@@ -65,3 +65,5 @@ export type {
     RentnerTableInstance,
     RentnerTableOptions,
 } from './shared/Table/Types/table.types.ts'
+
+export type { TableStyleOptions } from './shared/Table/Types/styling.types.ts'

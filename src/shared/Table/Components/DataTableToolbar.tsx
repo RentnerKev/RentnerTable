@@ -10,6 +10,8 @@ import {
     Search,
     X,
 } from 'lucide-react'
+import { getTableSlotClassName } from '../../../lib/Table/styling.ts'
+import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { TableButton } from './TableButton.tsx'
 import type { DataTableToolbarProps } from '../Types/dataTable.types.ts'
 
@@ -20,6 +22,8 @@ export function DataTableToolbar<TData extends RowData>({
     options,
     className = '',
 }: DataTableToolbarProps<TData>) {
+    const { state: styles } = useTableStyles()
+    const classNames = styles.classNames
     return (
         <div className={`border-b border-rentner-border ${className}`}>
             <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-start lg:justify-between">
@@ -36,7 +40,10 @@ export function DataTableToolbar<TData extends RowData>({
                         <div className="flex flex-wrap items-center gap-2.5">
                             <h2
                                 id={`${state.id}-title`}
-                                className="text-base font-semibold tracking-tight text-rentner-foreground"
+                                className={getTableSlotClassName(
+                                    'text-base font-semibold tracking-tight text-rentner-foreground',
+                                    classNames.title,
+                                )}
                             >
                                 {options.title ?? state.messages.title}
                             </h2>
@@ -53,13 +60,23 @@ export function DataTableToolbar<TData extends RowData>({
                             )}
                         </div>
                         {options.description && (
-                            <p className="mt-1 text-sm leading-relaxed text-rentner-muted">
+                            <p
+                                className={getTableSlotClassName(
+                                    'mt-1 text-sm leading-relaxed text-rentner-muted',
+                                    classNames.description,
+                                )}
+                            >
                                 {options.description}
                             </p>
                         )}
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div
+                    className={getTableSlotClassName(
+                        'flex flex-wrap items-center gap-2',
+                        classNames.toolbarControls,
+                    )}
+                >
                     {options.searchable !== false && (
                         <div className="w-full sm:w-64">
                             <TextInput
@@ -85,6 +102,7 @@ export function DataTableToolbar<TData extends RowData>({
                     )}
                     {options.columnFilters !== false && (
                         <TableButton
+                            slot="filterButton"
                             onClick={handler.handleToggleFilters}
                             aria-pressed={state.showFilters}
                             aria-expanded={state.showFilters}
@@ -100,7 +118,12 @@ export function DataTableToolbar<TData extends RowData>({
                             <ListFilter aria-hidden="true" className="size-4" />
                             {state.messages.filters}
                             {state.filterCount > 0 && (
-                                <span className="rounded bg-rentner-accent/15 px-1.5 tabular-nums">
+                                <span
+                                    className={getTableSlotClassName(
+                                        'rounded bg-rentner-surface px-1.5 tabular-nums text-rentner-foreground',
+                                        classNames.filterBadge,
+                                    )}
+                                >
                                     {state.filterCount}
                                 </span>
                             )}
@@ -115,7 +138,7 @@ export function DataTableToolbar<TData extends RowData>({
                             disabled={options.isLoading}
                             asChild
                             trigger={
-                                <TableButton>
+                                <TableButton slot="columnVisibilityButton">
                                     <Columns3
                                         aria-hidden="true"
                                         className="size-4"
@@ -132,6 +155,7 @@ export function DataTableToolbar<TData extends RowData>({
                     {state.hasFilters && (
                         <TableButton
                             iconOnly
+                            slot="resetFiltersButton"
                             aria-label={state.messages.resetFilters}
                             title={state.messages.resetFilters}
                             onClick={handler.handleResetFilters}

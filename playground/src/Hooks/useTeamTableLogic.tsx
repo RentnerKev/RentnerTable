@@ -285,6 +285,12 @@ export function useTeamTableLogic(
                 setContextRow(row)
                 setLastRowEvent(`${messages.clicked}: ${row.original.name}`)
             },
+            handleRowDoubleClick: (row) => {
+                setContextRow(row)
+                setLastRowEvent(
+                    messages.doubleClicked + ': ' + row.original.name,
+                )
+            },
             handleRowContextMenu: (row) => {
                 setContextRow(row)
                 setLastRowEvent(

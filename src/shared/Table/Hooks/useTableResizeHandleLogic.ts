@@ -1,10 +1,4 @@
-import {
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useRef,
-    useState,
-} from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, MouseEvent, TouchEvent } from 'react'
 import type { RowData } from '@tanstack/react-table'
 import { getColumnLabel } from '../../../lib/Table/presentation.ts'
@@ -23,58 +17,19 @@ export function useTableResizeHandleLogic<TData extends RowData>({
     header,
     messages,
     disabled,
+    availableWidth,
 }: TableColumnResizeHandleProps<TData>): TableColumnResizeHandleLogicResult {
     const element = useRef<HTMLHRElement | null>(null)
     const cleanup = useRef<(() => void) | null>(null)
-    const [availableWidth, setAvailableWidth] = useState(
-        Number.POSITIVE_INFINITY,
-    )
     const [previewOffset, setPreviewOffset] = useState(0)
-    const column = header.column
-    const visibleColumnCount = table.getVisibleLeafColumns().length
-    // The public table wrapper changes per render; the observer only needs
-    // the latest committed column count to distinguish utility columns.
-    const visibleColumnCountRef = useRef(visibleColumnCount)
+    const availableWidthRef = useRef(availableWidth)
     useLayoutEffect(() => {
-        visibleColumnCountRef.current = visibleColumnCount
-    }, [visibleColumnCount])
+        availableWidthRef.current = availableWidth
+    }, [availableWidth])
+    const column = header.column
     const label = getColumnLabel(column)
     const isResizing = column.getIsResizing()
     const direction = table.options.columnResizeDirection === 'rtl' ? -1 : 1
-    const getAvailableWidth = useCallback(() => {
-        const tableElement = element.current?.closest('table')
-        const viewport = tableElement?.parentElement
-        if (!viewport || viewport.clientWidth <= 0)
-            return Number.POSITIVE_INFINITY
-        const utilityCount =
-            (tableElement.querySelector('colgroup')?.children.length ?? 0) -
-            visibleColumnCountRef.current
-        const utilityWidth = Array.from(
-            tableElement.querySelector('colgroup')?.children ?? [],
-        )
-            .slice(0, Math.max(0, utilityCount))
-            .reduce(
-                (sum, col) =>
-                    sum +
-                    (col instanceof HTMLElement
-                        ? Number.parseFloat(col.style.width) || 0
-                        : 0),
-                0,
-            )
-        return Math.max(0, viewport.clientWidth - utilityWidth)
-    }, [])
-    useLayoutEffect(() => {
-        const measure = () => setAvailableWidth(getAvailableWidth())
-        const viewport = element.current?.closest('table')?.parentElement
-        if (!viewport || typeof ResizeObserver === 'undefined') return
-        const observer = new ResizeObserver(measure)
-        observer.observe(viewport)
-        return () => observer.disconnect()
-    }, [getAvailableWidth])
-    useLayoutEffect(() => {
-        const measure = () => setAvailableWidth(getAvailableWidth())
-        measure()
-    })
     useEffect(() => () => cleanup.current?.(), [])
     const columns = fitColumnWidths(
         table.getVisibleLeafColumns().map((item) => ({
@@ -99,7 +54,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
     const commit = (requested: number) => {
         const next = resizeColumnWidths(
             columns,
-            getAvailableWidth(),
+            availableWidthRef.current,
             column.id,
             requested,
         )
@@ -132,20 +87,30 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 .direction === 'rtl'
                 ? -1
                 : 1
-        const startColumns = fitColumnWidths(columns, getAvailableWidth())
+        const startColumns = fitColumnWidths(columns, availableWidthRef.current)
         const startSize =
             startColumns.find((item) => item.id === column.id)?.size ?? size
+        const contextWindow = contextDocument.defaultView
+        const mode = table.options.columnResizeMode
         let latestX = clientX
+        let frame: number | null = null
+        let lastOffset: number | undefined
+        let lastWidth: number | undefined
         const update = (nextX: number, end: boolean) => {
             latestX = nextX
+            const width = availableWidthRef.current
             const next = resizeColumnWidths(
                 startColumns,
-                getAvailableWidth(),
+                width,
                 column.id,
                 startSize + (nextX - clientX) * direction,
             )
             const offset = (next[column.id] ?? startSize) - startSize
-            if (table.options.columnResizeMode === 'onEnd') {
+            const changed = offset !== lastOffset || width !== lastWidth
+            if (!changed && !end) return
+            lastOffset = offset
+            lastWidth = width
+            if (changed && mode === 'onEnd') {
                 let boundaryOffset = 0
                 for (const item of startColumns) {
                     boundaryOffset += (next[item.id] ?? item.size) - item.size
@@ -153,27 +118,51 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 }
                 setPreviewOffset(boundaryOffset * layoutDirection)
             }
-            table.setColumnResizing((current) => ({
-                ...current,
-                deltaOffset: offset,
-                deltaPercentage: startSize > 0 ? offset / startSize : 0,
-            }))
-            if (end || table.options.columnResizeMode === 'onChange')
+            if (changed)
+                table.setColumnResizing((current) => ({
+                    ...current,
+                    deltaOffset: offset,
+                    deltaPercentage: startSize > 0 ? offset / startSize : 0,
+                }))
+            if (
+                (changed && mode === 'onChange') ||
+                (end && mode !== 'onChange')
+            )
                 table.setColumnSizing((current) => ({ ...current, ...next }))
         }
+        // Input devices can emit several moves before a paint. Keep the latest
+        // position and commit once per frame without measuring layout on this path.
+        const schedule = (nextX: number) => {
+            latestX = nextX
+            if (frame !== null) return
+            if (!contextWindow) {
+                update(latestX, false)
+                return
+            }
+            frame = contextWindow.requestAnimationFrame(() => {
+                frame = null
+                update(latestX, false)
+            })
+        }
         const finish = (nextX: number, cancel = false) => {
+            if (frame !== null) {
+                contextWindow?.cancelAnimationFrame(frame)
+                frame = null
+            }
+            // A release may arrive before the queued frame: flush its exact
+            // position synchronously so quick drags never lose their final width.
             if (!cancel) update(nextX, true)
             removeListeners()
             setPreviewOffset(0)
             table.resetHeaderSizeInfo(true)
         }
         const mouseMove = (move: globalThis.MouseEvent) =>
-            update(move.clientX, false)
+            schedule(move.clientX)
         const mouseEnd = (end: globalThis.MouseEvent) => finish(end.clientX)
         const touchMove = (move: globalThis.TouchEvent) => {
             if (move.cancelable) move.preventDefault()
             const touch = move.touches[0]
-            if (touch) update(touch.clientX, false)
+            if (touch) schedule(touch.clientX)
         }
         const touchEnd = (end: globalThis.TouchEvent) => {
             if (end.cancelable) end.preventDefault()

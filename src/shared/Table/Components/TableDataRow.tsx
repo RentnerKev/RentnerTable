@@ -3,6 +3,7 @@ import { ChevronRight, GripVertical } from 'lucide-react'
 import { TableCheckbox } from './TableCheckbox.tsx'
 import { TableButton } from './TableButton.tsx'
 import type { TableDataRowProps } from '../Types/interaction.types.ts'
+import { getTableSlotClassName } from '../../../lib/Table/styling.ts'
 import { useTableRowEventsLogic } from '../Hooks/useTableRowEventsLogic.ts'
 
 export function TableDataRow<TData extends RowData>({
@@ -22,24 +23,46 @@ export function TableDataRow<TData extends RowData>({
     reorderableRows,
     resizableColumns,
     onRowClick,
+    expandOnRowClick,
     onRowDoubleClick,
     onRowContextMenu,
     onCellClick,
     onCellDoubleClick,
     onCellContextMenu,
 }: TableDataRowProps<TData>) {
-    const { handler } = useTableRowEventsLogic(row, {
-        onRowClick,
-        onRowDoubleClick,
-        onRowContextMenu,
-    })
+    const { handler } = useTableRowEventsLogic(
+        row,
+        {
+            onRowClick,
+            onRowDoubleClick,
+            onRowContextMenu,
+        },
+        {
+            expandOnRowClick: Boolean(expandOnRowClick && renderExpandedRow),
+            isLoading,
+        },
+    )
     return (
         <>
             {/* Optional mouse notifications supplement the accessible controls rendered inside cells. */}
             <tr
                 data-row-id={row.id}
+                data-clickable={
+                    Boolean(
+                        !isLoading &&
+                        (onRowClick ||
+                            onRowDoubleClick ||
+                            (expandOnRowClick &&
+                                renderExpandedRow &&
+                                row.getCanExpand())),
+                    ) || undefined
+                }
                 data-stripe={striped && index % 2 === 1 ? true : undefined}
-                onClick={onRowClick ? handler.handleClick : undefined}
+                onClick={
+                    onRowClick || (expandOnRowClick && renderExpandedRow)
+                        ? handler.handleClick
+                        : undefined
+                }
                 onDoubleClick={
                     onRowDoubleClick ? handler.handleDoubleClick : undefined
                 }
@@ -50,7 +73,7 @@ export function TableDataRow<TData extends RowData>({
                     (selection?.selectionEnabled && row.getIsSelected()) ||
                     undefined
                 }
-                className={`border-b border-rentner-border motion-safe:transition-colors group-data-[striped=true]/table:data-[stripe=true]:bg-rentner-control/25 hover:bg-rentner-control/70 hover:shadow-[inset_3px_0_0_var(--rentner-accent,#13ecd6)] data-[selected=true]:bg-rentner-accent/5 ${classNames?.row ?? ''} ${rowClassName?.(row) ?? ''}`}
+                className={`data-[clickable=true]:cursor-pointer border-b border-rentner-border motion-safe:transition-colors group-data-[striped=true]/table:data-[stripe=true]:bg-rentner-control/25 hover:bg-rentner-control/70 hover:shadow-[inset_3px_0_0_var(--rentner-accent,#13ecd6)] data-[selected=true]:bg-rentner-accent/5 ${classNames?.row ?? ''} ${rowClassName?.(row) ?? ''}`}
             >
                 {reorderableRows && (
                     <td className="w-12 px-2 py-3">
@@ -88,7 +111,8 @@ export function TableDataRow<TData extends RowData>({
                     <td className="w-10 px-1">
                         <TableButton
                             iconOnly
-                            disabled={!row.getCanExpand()}
+                            slot="expandButton"
+                            disabled={isLoading || !row.getCanExpand()}
                             aria-label={
                                 row.getIsExpanded()
                                     ? view.messages.collapseRow(
@@ -101,11 +125,10 @@ export function TableDataRow<TData extends RowData>({
                             aria-expanded={row.getIsExpanded()}
                             aria-controls={`${detailsId}-${encodeURIComponent(row.id)}`}
                             onClick={row.getToggleExpandedHandler()}
-                            className="border-transparent bg-transparent"
                         >
                             <ChevronRight
                                 aria-hidden="true"
-                                className={`size-4 ${row.getIsExpanded() ? 'rotate-90' : ''}`}
+                                className={`${getTableSlotClassName('size-4', classNames?.expandIcon)} ${row.getIsExpanded() ? 'rotate-90' : ''}`}
                             />
                         </TableButton>
                     </td>
@@ -144,12 +167,21 @@ export function TableDataRow<TData extends RowData>({
                 ))}
             </tr>
             {renderExpandedRow && row.getIsExpanded() && (
-                <tr data-row-details-for={row.id}>
+                <tr
+                    data-row-details-for={row.id}
+                    className={classNames?.expandedRow}
+                >
                     <td
                         colSpan={view.columnCount}
-                        className="border-b border-rentner-border bg-rentner-control/30 p-5"
+                        className={getTableSlotClassName(
+                            'border-b border-rentner-border bg-rentner-control/30 p-5',
+                            classNames?.expandedCell,
+                        )}
                     >
-                        <div id={`${detailsId}-${encodeURIComponent(row.id)}`}>
+                        <div
+                            id={`${detailsId}-${encodeURIComponent(row.id)}`}
+                            className={classNames?.expandedContent}
+                        >
                             {renderExpandedRow(row)}
                         </div>
                     </td>

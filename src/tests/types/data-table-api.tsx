@@ -109,3 +109,21 @@ export const invalidFilter: TableColumn<Member> = {
     // @ts-expect-error Filter configuration is constrained to supported renderers.
     meta: { filter: { type: 'invented' } },
 }
+
+export const rowExpansionAndDesign: DataTableProps<Member> = {
+    ...props,
+    expandOnRowClick: true,
+    headerDividers: true,
+    classNames: {
+        filterButton: 'rounded border px-3',
+        filterButtonActive: 'border-blue-500',
+        paginationIcon: 'size-4',
+        sortIcon: 'size-6',
+        headerDivider: 'bg-blue-500',
+        expandedContent: 'p-4',
+    },
+    onRowDoubleClick: (row, event) => {
+        row.original.active satisfies boolean
+        event.currentTarget satisfies HTMLTableRowElement
+    },
+}

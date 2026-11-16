@@ -8,6 +8,7 @@ import type {
     SortingState,
     TableOptions,
 } from '@tanstack/react-table'
+import type { TableStyleOptions } from './styling.types.ts'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import type {
     TableInteractionMessages,
@@ -85,7 +86,8 @@ export type TableProps<TData extends RowData> = Omit<
     'children'
 > &
     TableLogicOptions<TData> &
-    TableRowEvents<TData> & {
+    TableRowEvents<TData> &
+    TableStyleOptions & {
         children?: never
         caption?: ReactNode
         size?: TableSize

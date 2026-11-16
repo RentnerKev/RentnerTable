@@ -21,6 +21,7 @@ export function TableCheckbox({
             disabled={disabled}
             onChange={onChange}
             controlSize="sm"
+            className="enabled:cursor-pointer disabled:cursor-not-allowed"
         />
     )
 }

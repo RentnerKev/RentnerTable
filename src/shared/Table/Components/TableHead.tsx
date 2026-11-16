@@ -1,5 +1,6 @@
 import type { RowData } from '@tanstack/react-table'
-import { ChevronRight } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight } from 'lucide-react'
+import { getTableSlotClassName } from '../../../lib/Table/styling.ts'
 import { TableCheckbox } from './TableCheckbox.tsx'
 import { TableResizeHandle } from './TableResizeHandle.tsx'
 import type { TableHeadProps } from '../Types/dataTable.types.ts'
@@ -15,7 +16,9 @@ export function TableHead<TData extends RowData>({
     classNames,
     stickyHeader,
     resizableColumns,
+    resizeAvailableWidth = Number.POSITIVE_INFINITY,
     reorderableRows,
+    headerDividers,
 }: TableHeadProps<TData>) {
     return (
         <thead
@@ -70,7 +73,7 @@ export function TableHead<TData extends RowData>({
                             />
                         </th>
                     )}
-                    {group.headers.map((item) => (
+                    {group.headers.map((item, columnIndex) => (
                         <th
                             key={item.header.id}
                             colSpan={item.header.colSpan}
@@ -116,7 +119,7 @@ export function TableHead<TData extends RowData>({
                                                 item.header.column.columnDef
                                                     .meta?.align
                                             }
-                                            className={`group/sort relative flex w-full items-center gap-2 rounded-sm text-left motion-safe:transition-colors hover:text-rentner-foreground focus-visible:outline-2 ${resizableColumns ? 'focus-visible:-outline-offset-2' : 'focus-visible:outline-offset-4'} focus-visible:outline-rentner-accent disabled:cursor-wait disabled:opacity-60 data-[align=center]:justify-center data-[align=center]:text-center data-[align=right]:justify-end data-[align=right]:text-right`}
+                                            className={`${getTableSlotClassName('rounded-sm text-left hover:text-rentner-foreground', classNames?.sortButton)} group/sort relative flex w-full cursor-pointer items-center gap-2 motion-safe:transition-colors focus-visible:outline-2 ${resizableColumns ? 'focus-visible:-outline-offset-2' : 'focus-visible:outline-offset-4'} focus-visible:outline-rentner-accent disabled:cursor-wait disabled:opacity-60 data-[align=center]:justify-center data-[align=center]:text-center data-[align=right]:justify-end data-[align=right]:text-right`}
                                         >
                                             <span className="min-w-0 truncate">
                                                 <table.FlexRender
@@ -129,9 +132,34 @@ export function TableHead<TData extends RowData>({
                                             </span>
                                             <span
                                                 aria-hidden="true"
-                                                className="ml-auto shrink-0 text-rentner-accent group-data-[align=center]/sort:ml-0 group-data-[align=right]/sort:ml-0"
+                                                className="ml-auto shrink-0 group-data-[align=center]/sort:ml-0 group-data-[align=right]/sort:ml-0"
                                             >
-                                                {item.sortIndicator}
+                                                {item.sortIndicator === '↑' ? (
+                                                    <ArrowUp
+                                                        data-table-sort-icon=""
+                                                        className={getTableSlotClassName(
+                                                            'size-4.5 stroke-3 text-rentner-accent',
+                                                            classNames?.sortIcon,
+                                                        )}
+                                                    />
+                                                ) : item.sortIndicator ===
+                                                  '↓' ? (
+                                                    <ArrowDown
+                                                        data-table-sort-icon=""
+                                                        className={getTableSlotClassName(
+                                                            'size-4.5 stroke-3 text-rentner-accent',
+                                                            classNames?.sortIcon,
+                                                        )}
+                                                    />
+                                                ) : (
+                                                    <ArrowUpDown
+                                                        data-table-sort-icon=""
+                                                        className={getTableSlotClassName(
+                                                            'size-4.5 stroke-3 text-rentner-muted',
+                                                            classNames?.sortIcon,
+                                                        )}
+                                                    />
+                                                )}
                                             </span>
                                         </button>
                                     ) : (
@@ -143,11 +171,26 @@ export function TableHead<TData extends RowData>({
                                     )}
                                 </div>
                             </div>
+                            {headerDividers &&
+                                columnIndex < group.headers.length - 1 && (
+                                    <span
+                                        aria-hidden="true"
+                                        data-table-header-divider=""
+                                        className={[
+                                            'pointer-events-none absolute inset-y-3 end-[0.75px]',
+                                            getTableSlotClassName(
+                                                'w-[1.5px] bg-rentner-border',
+                                                classNames?.headerDivider,
+                                            ),
+                                        ].join(' ')}
+                                    />
+                                )}
                             {resizableColumns &&
                                 !item.header.isPlaceholder &&
                                 item.header.column.columns.length === 0 &&
                                 item.header.column.getCanResize() && (
                                     <TableResizeHandle
+                                        availableWidth={resizeAvailableWidth}
                                         table={table}
                                         header={item.header}
                                         messages={view.messages}

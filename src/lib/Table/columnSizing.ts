@@ -25,15 +25,15 @@ export function fitColumnWidths(
     const reduction = Math.min(total - budget, capacity)
     if (capacity > 0) {
         for (const column of fitted) {
-            if (column.resizable)
+            if (column.resizable) {
                 column.size -=
                     (Math.max(0, column.size - column.min) / capacity) *
                     reduction
+            }
         }
     }
 
-    // On viewports narrower than the configured minima, responsive presentation
-    // must also fit. Keep those minima intact in the persisted columnSizing.
+    // Responsive fitting is separate from user resizing and keeps persisted minima.
     const remaining = total - reduction
     if (remaining > budget) {
         for (const column of fitted) column.size *= budget / remaining
@@ -47,24 +47,25 @@ export function getColumnResizeMaximum(
     available: number,
     id: string,
 ): number {
-    const column = columns.find((item) => item.id === id)
-    if (!column) return 0
-    const total = columns.reduce((sum, item) => sum + item.size, 0)
-    const capacity = columns.reduce(
-        (sum, item) =>
-            sum +
-            (item.id !== id && item.resizable
-                ? Math.max(0, item.size - item.min)
-                : 0),
-        0,
-    )
+    const targetIndex = columns.findIndex((column) => column.id === id)
+    const target = columns[targetIndex]
+    if (!target) return 0
+    const total = columns.reduce((sum, column) => sum + column.size, 0)
+    const capacity = columns
+        .slice(targetIndex + 1)
+        .reduce(
+            (sum, column) =>
+                sum +
+                (column.resizable ? Math.max(0, column.size - column.min) : 0),
+            0,
+        )
     return Math.min(
-        column.max,
-        column.size + Math.max(0, available - total) + capacity,
+        target.max,
+        target.size + Math.max(0, available - total) + capacity,
     )
 }
 
-/** Growing a leaf borrows space from resizable peers, stopping at their minima. */
+/** Only following resizable leaves lend width; preceding boundaries stay fixed. */
 export function resizeColumnWidths(
     columns: readonly ResizeColumn[],
     available: number,
@@ -72,7 +73,8 @@ export function resizeColumnWidths(
     requested: number,
 ): Record<string, number> {
     const fitted = fitColumnWidths(columns, available)
-    const target = fitted.find((column) => column.id === id)
+    const targetIndex = fitted.findIndex((column) => column.id === id)
+    const target = fitted[targetIndex]
     if (!target?.resizable) return {}
     const maximum = getColumnResizeMaximum(fitted, available, id)
     const size = Math.min(maximum, Math.max(target.min, requested))
@@ -81,21 +83,21 @@ export function resizeColumnWidths(
         0,
         size - target.size - Math.max(0, available - total),
     )
-    const capacity = fitted.reduce(
-        (sum, column) =>
-            sum +
-            (column.id !== id && column.resizable
-                ? Math.max(0, column.size - column.min)
-                : 0),
-        0,
-    )
+    const capacity = fitted
+        .slice(targetIndex + 1)
+        .reduce(
+            (sum, column) =>
+                sum +
+                (column.resizable ? Math.max(0, column.size - column.min) : 0),
+            0,
+        )
     return Object.fromEntries(
-        fitted.map((column) => [
+        fitted.map((column, index) => [
             column.id,
-            column.id === id
+            index === targetIndex
                 ? size
                 : column.size -
-                  (column.resizable && capacity > 0
+                  (index > targetIndex && column.resizable && capacity > 0
                       ? (Math.max(0, column.size - column.min) / capacity) *
                         reduction
                       : 0),

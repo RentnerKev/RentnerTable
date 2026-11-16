@@ -72,6 +72,7 @@ export function useTableColumnResizeLogic<TData extends RowData>(
     return {
         state: {
             fixed: enabled && ready,
+            availableWidth: Math.max(0, availableWidth - extraWidth),
             width: widths.reduce(
                 (sum, column) => sum + column.width,
                 extraWidth,

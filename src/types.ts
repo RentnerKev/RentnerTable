@@ -43,3 +43,5 @@ export type {
     DataTablePaginationProps,
     TableRowActionsProps,
 } from './shared/Table/Types/dataTable.types.ts'
+
+export type { TableStyleOptions } from './shared/Table/Types/styling.types.ts'

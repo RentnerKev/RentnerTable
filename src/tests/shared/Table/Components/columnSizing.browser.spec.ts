@@ -126,3 +126,48 @@ test('clamps touch drags and cleans up touch cancellation', async ({
     await expect(handle).toHaveAttribute('aria-valuenow', stopped ?? '')
     await expectFitted(page)
 })
+
+test('keeps preceding column boundaries fixed when resizing a later column in either direction', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 1200 })
+    await page.goto('/')
+    await page
+        .getByRole('button', { name: 'Resize columns', exact: true })
+        .click()
+    const preceding = page.locator('thead th[data-column-id]')
+    const before = await preceding.evaluateAll((headers) =>
+        headers.slice(0, 3).map((header) => {
+            const box = header.getBoundingClientRect()
+            return { x: box.x, width: box.width }
+        }),
+    )
+    const target = page.locator('th[data-column-id="status"]')
+    const initial = await target.boundingBox()
+    if (!initial) throw new Error('Missing target column')
+    const handle = page.getByRole('separator', {
+        name: 'Resize Status',
+        exact: true,
+    })
+    await drag(page, handle, 60)
+    const grown = await target.boundingBox()
+    if (!grown) throw new Error('Missing resized column')
+    expect(grown.x).toBeCloseTo(initial.x, 0)
+    expect(grown.width).toBeGreaterThan(initial.width + 20)
+    await drag(page, handle, -40)
+    const shrunk = await target.boundingBox()
+    if (!shrunk) throw new Error('Missing resized column')
+    expect(shrunk.x).toBeCloseTo(initial.x, 0)
+    expect(shrunk.width).toBeLessThan(grown.width - 20)
+    const after = await preceding.evaluateAll((headers) =>
+        headers.slice(0, 3).map((header) => {
+            const box = header.getBoundingClientRect()
+            return { x: box.x, width: box.width }
+        }),
+    )
+    for (let index = 0; index < before.length; index++) {
+        expect(after[index]!.x).toBeCloseTo(before[index]!.x, 0)
+        expect(after[index]!.width).toBeCloseTo(before[index]!.width, 0)
+    }
+    await expectFitted(page)
+})

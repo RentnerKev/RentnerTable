@@ -88,6 +88,7 @@ export const playgroundMessages = {
         interactionHint:
             'Click a status to edit it, or right-click a row for actions.',
         clicked: 'Clicked',
+        doubleClicked: 'Double-clicked',
         rightClicked: 'Right-clicked',
         theme: 'Light theme',
         language: 'Deutsch',
@@ -134,6 +135,7 @@ export const playgroundMessages = {
         interactionHint:
             'Status anklicken zum Bearbeiten, Rechtsklick auf eine Zeile für Aktionen.',
         clicked: 'Angeklickt',
+        doubleClicked: 'Doppelklick',
         rightClicked: 'Rechtsklick',
         theme: 'Helles Theme',
         language: 'English',
