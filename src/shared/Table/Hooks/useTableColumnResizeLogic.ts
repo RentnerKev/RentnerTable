@@ -29,13 +29,18 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         const viewport = element.current?.parentElement
         if (!viewport) return
         const measure = () => {
+            const minimum = element.current
+                ? element.current.ownerDocument.defaultView?.getComputedStyle(element.current).minWidth
+                : undefined
+            const minimumWidth = minimum?.endsWith('px') ? Number.parseFloat(minimum) : 0
             if (viewport.clientWidth > 0)
-                setAvailableWidth(viewport.clientWidth)
+                setAvailableWidth(Math.max(viewport.clientWidth, Number.isFinite(minimumWidth) ? minimumWidth : 0))
         }
         measure()
         if (typeof ResizeObserver === 'undefined') return
         const observer = new ResizeObserver(measure)
         observer.observe(viewport)
+        if (element.current) observer.observe(element.current)
         return () => observer.disconnect()
     }, [enabled])
     useLayoutEffect(() => {
