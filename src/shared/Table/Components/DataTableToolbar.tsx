@@ -15,7 +15,11 @@ import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { TableButton } from './TableButton.tsx'
 import type { DataTableToolbarProps } from '../Types/dataTable.types.ts'
 
-const Menu = lazy(() => import('@rentnerkev/menu/menu').then(module => ({ default: module.Menu })))
+const Menu = lazy(() =>
+    import('@rentnerkev/menu/menu').then((module) => ({
+        default: module.Menu,
+    })),
+)
 
 export function DataTableToolbar<TData extends RowData>({
     table,
@@ -132,22 +136,13 @@ export function DataTableToolbar<TData extends RowData>({
                         </TableButton>
                     )}
                     {options.columnVisibility !== false && (
-                        <Suspense fallback={
-                            <TableButton slot="columnVisibilityButton" disabled aria-busy="true">
-                                <Columns3 aria-hidden="true" className="size-4" />
-                                {state.messages.columns}
-                                <ChevronDown aria-hidden="true" className="size-3" />
-                            </TableButton>
-                        }>
-                        <Menu
-                            ariaLabel={state.messages.columns}
-                            items={state.columnItems}
-                            align="end"
-                            controlSize="sm"
-                            disabled={options.isLoading}
-                            asChild
-                            trigger={
-                                <TableButton slot="columnVisibilityButton">
+                        <Suspense
+                            fallback={
+                                <TableButton
+                                    slot="columnVisibilityButton"
+                                    disabled
+                                    aria-busy="true"
+                                >
                                     <Columns3
                                         aria-hidden="true"
                                         className="size-4"
@@ -159,7 +154,28 @@ export function DataTableToolbar<TData extends RowData>({
                                     />
                                 </TableButton>
                             }
-                        />
+                        >
+                            <Menu
+                                ariaLabel={state.messages.columns}
+                                items={state.columnItems}
+                                align="end"
+                                controlSize="sm"
+                                disabled={options.isLoading}
+                                asChild
+                                trigger={
+                                    <TableButton slot="columnVisibilityButton">
+                                        <Columns3
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                        {state.messages.columns}
+                                        <ChevronDown
+                                            aria-hidden="true"
+                                            className="size-3"
+                                        />
+                                    </TableButton>
+                                }
+                            />
                         </Suspense>
                     )}
                     {state.hasFilters && (

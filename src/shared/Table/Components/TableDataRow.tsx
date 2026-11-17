@@ -162,7 +162,10 @@ export function TableDataRow<TData extends RowData>({
                         }
                         className={`px-4 py-3 align-middle group-data-[size=sm]/table:px-3 group-data-[size=sm]/table:py-2 group-data-[size=lg]/table:px-5 group-data-[size=lg]/table:py-4 data-[align=center]:text-center data-[align=right]:text-right ${cell.column.columnDef.meta?.cellClassName ?? ''} ${classNames?.cell ?? ''}`}
                     >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                        )}
                     </td>
                 ))}
             </tr>
