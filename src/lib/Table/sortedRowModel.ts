@@ -28,7 +28,7 @@ interface PreparedSort {
     undefinedPriority: false | -1 | 1 | 'first' | 'last' | undefined
 }
 
-const builtins = Object.entries(sortFns).map(([name, fn]) => ({
+const builtins = /* @__PURE__ */ Object.entries(sortFns).map(([name, fn]) => ({
     fn,
     resolve: fn.resolveDataValue,
     compare: fn.sort,

@@ -5,7 +5,9 @@ import type { RowData } from '@tanstack/react-table'
 import type { TableSurfaceProps } from '../Types/dataTable.types.ts'
 import { TableViewport } from './TableViewport.tsx'
 
-const ReorderableTable = lazy(() => import('./TableReorderProvider.tsx'))
+const ReorderableTable = /* @__PURE__ */ lazy(() =>
+    import('./TableNativeReorderProvider.tsx'),
+)
 
 export function TableSurface<TData extends RowData>(
     props: TableSurfaceProps<TData>,

@@ -6,7 +6,6 @@ import {
     columnResizingFeature,
     columnVisibilityFeature,
     createExpandedRowModel,
-    createFilteredRowModel,
     createPaginatedRowModel,
     sortFns,
     globalFilteringFeature,
@@ -25,32 +24,39 @@ import {
 } from './filters.ts'
 
 import { createMaterializedSortedRowModel } from './sortedRowModel.ts'
+import { createCoordinatedFilteredRowModels } from './filteredRowModel.ts'
 
 const columnMeta: TableColumnMeta = {}
 
-export const rentnerTableFeatures = tableFeatures({
-    columnMeta,
-    columnOrderingFeature,
-    columnSizingFeature,
-    columnResizingFeature,
-    columnVisibilityFeature,
-    columnFilteringFeature,
-    globalFilteringFeature,
-    filteredRowModel: createFilteredRowModel(),
-    filterFns: {
-        text: tableTextFilter,
-        equals: tableEqualsFilter,
-        dateRange: tableDateRangeFilter,
-    },
-    rowPaginationFeature,
-    paginatedRowModel: createPaginatedRowModel(),
-    rowSelectionFeature,
-    rowExpandingFeature,
-    expandedRowModel: createExpandedRowModel(),
-    rowSortingFeature,
-    sortedRowModel: createMaterializedSortedRowModel(),
-    sortFns,
-})
+function createRentnerTableFeatures() {
+    const coordinated = createCoordinatedFilteredRowModels()
+    return tableFeatures({
+        columnMeta,
+        columnOrderingFeature,
+        columnSizingFeature,
+        columnResizingFeature,
+        columnVisibilityFeature,
+        columnFilteringFeature,
+        globalFilteringFeature,
+        coreRowModel: coordinated.coreRowModel,
+        filteredRowModel: coordinated.filteredRowModel,
+        filterFns: {
+            text: tableTextFilter,
+            equals: tableEqualsFilter,
+            dateRange: tableDateRangeFilter,
+        },
+        rowPaginationFeature,
+        paginatedRowModel: /* @__PURE__ */ createPaginatedRowModel(),
+        rowSelectionFeature,
+        rowExpandingFeature,
+        expandedRowModel: /* @__PURE__ */ createExpandedRowModel(),
+        rowSortingFeature,
+        sortedRowModel: /* @__PURE__ */ createMaterializedSortedRowModel(),
+        sortFns,
+    })
+}
+
+export const rentnerTableFeatures = /* @__PURE__ */ createRentnerTableFeatures()
 
 export function createTableColumnHelper<TData extends RowData>() {
     return createColumnHelper<typeof rentnerTableFeatures, TData>()

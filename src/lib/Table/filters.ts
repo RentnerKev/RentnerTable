@@ -22,7 +22,7 @@ function resolveTextFilterValue(value: unknown) {
     }
 }
 
-export const tableTextFilter = Object.assign(
+export const tableTextFilter = /* @__PURE__ */ Object.assign(
     (
         row: { getValue: (id: string) => unknown },
         columnId: string,
@@ -46,7 +46,7 @@ export const tableTextFilter = Object.assign(
     },
 )
 
-export const tableEqualsFilter = Object.assign(
+export const tableEqualsFilter = /* @__PURE__ */ Object.assign(
     (
         row: { getValue: (id: string) => unknown },
         columnId: string,
@@ -111,7 +111,7 @@ function isResolvedDateRange(
     )
 }
 
-export const tableDateRangeFilter = Object.assign(
+export const tableDateRangeFilter = /* @__PURE__ */ Object.assign(
     (
         row: { getValue: (id: string) => unknown },
         columnId: string,
