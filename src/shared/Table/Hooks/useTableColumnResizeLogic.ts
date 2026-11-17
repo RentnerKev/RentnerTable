@@ -1,9 +1,15 @@
-import { useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import {
+    useImperativeHandle,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import type { Ref } from 'react'
 import type { RowData } from '@tanstack/react-table'
 import type { RentnerTableInstance } from '../Types/table.types.ts'
 import type { ColumnResizeLogicResult } from '../Types/interaction.types.ts'
-import { fitColumnWidths } from '../../../lib/Table/columnSizing.ts'
+import { getTableColumnLayout } from '../../../lib/Table/columnLayout.ts'
 
 export function useTableColumnResizeLogic<TData extends RowData>(
     table: RentnerTableInstance<TData>,
@@ -23,7 +29,6 @@ export function useTableColumnResizeLogic<TData extends RowData>(
     const [availableWidth, setAvailableWidth] = useState(
         Number.POSITIVE_INFINITY,
     )
-    const columns = table.getVisibleLeafColumns()
     useLayoutEffect(() => {
         if (!enabled) return
         const viewport = element.current?.parentElement
@@ -57,23 +62,11 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         // Configured widths are weights; mounting must not overwrite them or persist a synthetic resize.
         setReady(true)
     }, [enabled, ready])
-    const widths = fitColumnWidths(
-        columns.map((column) => ({
-            id: column.id,
-            size: column.getSize(),
-            min:
-                column.columnDef.minSize ??
-                table.options.defaultColumn?.minSize ??
-                20,
-            max:
-                column.columnDef.maxSize ??
-                table.options.defaultColumn?.maxSize ??
-                Number.MAX_SAFE_INTEGER,
-            resizable: column.getCanResize(),
-        })),
-        availableWidth - extraWidth,
-        Object.keys(table.state.columnSizing).length === 0,
-    ).map((column) => ({ id: column.id, width: column.size }))
+    const columns = getTableColumnLayout(table, availableWidth - extraWidth)
+    const widths = useMemo(
+        () => columns.map((column) => ({ id: column.id, width: column.size })),
+        [columns],
+    )
     return {
         state: {
             fixed: enabled && ready,

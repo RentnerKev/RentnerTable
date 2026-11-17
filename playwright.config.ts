@@ -4,6 +4,7 @@ const baseURL = 'http://127.0.0.1:4179'
 
 export default defineConfig({
     testDir: './src/tests',
+    outputDir: './test-results/browser',
     testMatch: '**/*.browser.spec.ts',
     fullyParallel: true,
     forbidOnly: Boolean(process.env.CI),

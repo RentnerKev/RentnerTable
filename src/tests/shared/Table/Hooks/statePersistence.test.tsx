@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { createRef, useState } from 'react'
 import { renderToString } from 'react-dom/server'
+import * as persistenceSnapshot from '../../../../lib/Table/persistence.ts'
 import { createTableColumnHelper } from '../../../../lib/Table/table.ts'
 import { useDataTableLogic } from '../../../../shared/Table/Hooks/useDataTableLogic.ts'
 import type {
@@ -630,6 +631,101 @@ describe('table state persistence integration', () => {
         expect(result.current.handler.handleGetState().state.rowOrder).toEqual(
             ids,
         )
+    })
+
+    test('skips snapshot normalization for unchanged options and excluded state fields', async () => {
+        const stored = memoryStorage()
+        const { result, rerender } = renderHook(
+            ({ loading, limited }) =>
+                useDataTableLogic({
+                    ...base,
+                    selectable: true,
+                    isLoading: loading,
+                    persistence: {
+                        key: 'preferences',
+                        storage: stored.storage,
+                        fields: limited ? ['globalFilter'] : undefined,
+                        debounceMs: 60_000,
+                    },
+                }),
+            { initialProps: { loading: false, limited: false } },
+        )
+        await waitFor(() =>
+            expect(result.current.state.persistenceStatus).toBe('ready'),
+        )
+        const normalize = spyOn(persistenceSnapshot, 'createTableStateSnapshot')
+        try {
+            await act(async () => {
+                rerender({ loading: true, limited: false })
+                await Promise.resolve()
+            })
+            expect(normalize).not.toHaveBeenCalled()
+            rerender({ loading: true, limited: true })
+            await waitFor(() =>
+                expect(result.current.state.persistenceStatus).toBe('ready'),
+            )
+            normalize.mockClear()
+            await act(async () => {
+                result.current.table.setRowSelection({ 'row-0': true })
+                await Promise.resolve()
+            })
+            expect(normalize).not.toHaveBeenCalled()
+            await act(async () => {
+                result.current.handler.handleSearch('Record 2')
+                await Promise.resolve()
+            })
+            expect(normalize).toHaveBeenCalled()
+            await act(async () => {
+                await result.current.handler.handleFlushState()
+            })
+            expect(stored.records.get('preferences')).toEqual(
+                snapshot({ globalFilter: 'Record 2' }),
+            )
+        } finally {
+            normalize.mockRestore()
+        }
+    })
+
+    test('exports independent mutable snapshots without changing table state or pending storage writes', async () => {
+        const stored = memoryStorage()
+        const { result } = renderHook(() =>
+            useDataTableLogic({
+                ...base,
+                selectable: true,
+                persistence: {
+                    key: 'preferences',
+                    storage: stored.storage,
+                    debounceMs: 60_000,
+                },
+            }),
+        )
+        await waitFor(() =>
+            expect(result.current.state.persistenceStatus).toBe('ready'),
+        )
+        await act(async () => {
+            result.current.table.setRowSelection({ 'row-0': true })
+            await Promise.resolve()
+        })
+        const exported = result.current.handler.handleGetState()
+        if (!exported.state.rowSelection)
+            throw new Error('Expected selected rows')
+        exported.state.rowSelection['row-0'] = false
+        exported.state.globalFilter = 'changed export'
+        const current = result.current.handler.handleGetState()
+        expect(current.state.rowSelection).toEqual({ 'row-0': true })
+        expect(current.state.globalFilter).toBeUndefined()
+        expect(result.current.table.state.rowSelection).toEqual({
+            'row-0': true,
+        })
+        await act(async () => {
+            await result.current.handler.handleFlushState()
+        })
+        expect(stored.records.get('preferences')?.state.rowSelection).toEqual({
+            'row-0': true,
+        })
+        expect(
+            stored.records.get('preferences')?.state.globalFilter,
+        ).toBeUndefined()
     })
 
     test('server rendering does not execute persistence storage operations', () => {

@@ -34,6 +34,7 @@ export interface TablePersistenceSession {
     loading: Promise<void>
     finishRestore?: () => void
     baseline: TableStateSnapshot
+    observed: Record<TableStateField, unknown>
     dirty: Set<TableStateField>
     pending?: TableStateSnapshot
     timer?: ReturnType<typeof setTimeout>

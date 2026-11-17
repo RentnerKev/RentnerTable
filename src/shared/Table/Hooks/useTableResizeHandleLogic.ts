@@ -3,8 +3,11 @@ import type { KeyboardEvent, MouseEvent, TouchEvent } from 'react'
 import type { RowData } from '@tanstack/react-table'
 import { getColumnLabel } from '../../../lib/Table/presentation.ts'
 import {
+    getColumnLayoutResizeBounds,
+    getTableColumnLayout,
+} from '../../../lib/Table/columnLayout.ts'
+import {
     fitColumnWidths,
-    getColumnResizeMaximum,
     resizeColumnWidths,
 } from '../../../lib/Table/columnSizing.ts'
 import type {
@@ -31,27 +34,15 @@ export function useTableResizeHandleLogic<TData extends RowData>({
     const isResizing = column.getIsResizing()
     const direction = table.options.columnResizeDirection === 'rtl' ? -1 : 1
     useEffect(() => () => cleanup.current?.(), [])
-    const columns = fitColumnWidths(
-        table.getVisibleLeafColumns().map((item) => ({
-            id: item.id,
-            size: item.getSize(),
-            min:
-                item.columnDef.minSize ??
-                table.options.defaultColumn?.minSize ??
-                20,
-            max:
-                item.columnDef.maxSize ??
-                table.options.defaultColumn?.maxSize ??
-                Number.MAX_SAFE_INTEGER,
-            resizable: item.getCanResize(),
-        })),
+    const columns = getTableColumnLayout(table, availableWidth)
+    const bounds = getColumnLayoutResizeBounds(
+        columns,
         availableWidth,
-        Object.keys(table.state.columnSizing).length === 0,
+        column.id,
     )
-    const fitted = columns.find((item) => item.id === column.id)
-    const min = fitted?.min ?? column.columnDef.minSize ?? 20
-    const max = getColumnResizeMaximum(columns, availableWidth, column.id)
-    const size = fitted?.size ?? column.getSize()
+    const min = bounds?.column.min ?? column.columnDef.minSize ?? 20
+    const max = bounds?.maximum ?? 0
+    const size = bounds?.column.size ?? column.getSize()
     const commit = (requested: number) => {
         const next = resizeColumnWidths(
             columns,
