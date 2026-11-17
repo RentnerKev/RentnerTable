@@ -30,14 +30,119 @@ The package supports React 19, React DOM 19, Tailwind CSS 4 and TanStack Table 9
 | `@rentnerkev/table/table`        | `Table`, a minimal sortable table                    |
 | `@rentnerkev/table/data-table`   | `DataTable`, the complete table interface            |
 | `@rentnerkev/table/hooks`        | `useDataTableLogic`                                  |
+| `@rentnerkev/table/column-settings` | `TableColumnSettings`, a standalone layout dialog  |
 | `@rentnerkev/table/filters`      | Portable text, equality and date-range filters       |
 | `@rentnerkev/table/types`        | Type-only contracts                                  |
+| `@rentnerkev/table/ai`           | Read-only installed documentation for Node.js/Bun    |
 | `@rentnerkev/table/tailwind.css` | Theme, scanned library classes and control styles    |
 | `@rentnerkev/table/theme.css`    | Shared theme token mapping only                      |
 
 `DataTable` requires `data`, `columns` and `getRowId`. Supply a stable string ID from the record rather than a page-relative array index. `getRowLabel` gives selection and detail buttons a readable accessible name.
 
 `Table` takes `data`, `columns`, an optional `getRowId` and a `caption`. It renders every supplied row and supports `enableSorting`, `initialSorting`, `locale`, `messages`, density, striped rows and loading/empty content. It accepts native table attributes and a ref.
+
+## Column layout dialog
+
+Set `columnSettings` on `DataTable` to replace the visibility menu with a modal
+layout editor. Its isolated draft supports moving columns, visibility and pixel
+widths. Apply commits all three slices together; Cancel or Escape discards edits
+that have not been applied. The default remains the existing visibility menu.
+
+```tsx
+import { DataTable, createTableColumnHelper } from '@rentnerkev/table'
+
+interface Member { id: string; name: string; role: string }
+const column = createTableColumnHelper<Member>()
+const columns = column.columns([
+    column.accessor('name', {
+        header: 'Member', enableHiding: false,
+        size: 220, minSize: 100, maxSize: 480,
+    }),
+    column.accessor('role', {
+        header: 'Role', size: 160, minSize: 80, maxSize: 320,
+    }),
+])
+
+export function MemberTable({ members, accountId }: {
+    members: readonly Member[]
+    accountId: string
+}) {
+    return (
+        <DataTable
+            data={members}
+            columns={columns}
+            getRowId={(member) => member.id}
+            columnSettings
+            resizableColumns
+            persistence={{
+                key: 'members-layout:' + accountId,
+                fields: ['columnOrder', 'columnVisibility', 'columnSizing'],
+            }}
+            messages={{ columnSettings: { title: 'Arrange member columns' } }}
+        />
+    )
+}
+```
+
+Width editing requires `resizableColumns` and respects `enableResizing`,
+`minSize` and `maxSize`. Non-hideable columns remain protected, at least one
+column stays visible, and invalid or empty widths disable Apply. Removed column
+IDs are ignored and new columns are appended. Reset changes only the draft to
+the configured initial order, visibility and widths; it does not clear storage.
+
+Controlled `columnOrder`, `columnVisibility` and `columnSizing` each need their
+matching `onColumnOrderChange`, `onColumnVisibilityChange` and
+`onColumnSizingChange` callback under `tableOptions`. Include all three fields
+when restricting `persistence.fields`; omitting that allowlist stores all
+supported preferences. Apply waits for the persistence flush before closing.
+If saving fails, the already applied layout stays active and the dialog allows
+another Apply. Closing after that error does not undo the confirmed layout.
+Load errors provide Retry. Use a distinct preference key per table and account.
+
+For custom composition, import `TableColumnSettings` from the root or
+`@rentnerkev/table/column-settings`. Pass `table` from `useDataTableLogic`, wire
+`onFlush={handler.handleFlushState}`, `onReload={handler.handleReloadState}`,
+`persistenceStatus={state.persistenceStatus}` and
+`persistenceError={state.persistenceError}`, and change `scope` with the
+account preference key. This discards obsolete drafts and ignores stale async
+completions. A custom `DataTableToolbar` can instead use
+`options.columnSettings` and the matching `options.persistence` key.
+
+The dialog supports keyboard focus containment, Escape and focus return to its
+trigger. Built-in messages cover English and German; `messages.columnSettings`
+accepts partial labels and `moveUp`/`moveDown` formatter functions.
+`classNames.columnSettings` styles the dialog container.
+
+## Local documentation for tools
+
+The separate `/ai` entry uses `node:fs` in local Node.js or Bun scripts. It reads
+the installed package without importing React UI or making network requests.
+Keep it outside browser bundles.
+
+```ts
+import {
+    getPackageApi,
+    getPackageDocumentation,
+    getPackageExamples,
+    getPackageInfo,
+    searchPackageDocumentation,
+} from '@rentnerkev/table/ai'
+
+console.log(getPackageInfo().version)
+console.log(getPackageDocumentation('usage').content)
+console.log(getPackageDocumentation('readme').path)
+console.log(getPackageApi({ subpath: './column-settings', symbol: 'TableColumnSettings' }))
+console.log(searchPackageDocumentation('columnSettings'))
+console.log(getPackageExamples())
+```
+
+`getPackageDocumentation()` defaults to `usage`; only `usage` and `readme` are
+accepted. `getPackageApi()` reads public typed entries and local declaration
+dependencies, excluding `/ai`; optional `subpath` and `symbol` validate a public
+export and do not trim declarations to one symbol. Callers cannot provide file
+paths. Search is literal and case-insensitive, returning paths, one-based line
+numbers and matching text; examples return fenced code blocks as language/code
+pairs. Results describe the installed version.
 
 ## Resizing and row reordering
 
@@ -127,7 +232,7 @@ export function PersistentMembers({
 }
 ```
 
-Snapshots have `{ version: 1, state: { ... } }`. Supported fields are `sorting`, `columnFilters`, `globalFilter`, `columnVisibility`, `columnSizing`, `pagination`, `rowSelection`, `expanded`, `showFilters` and internal `rowOrder`. Set `fields` to an allowlist, for example `['sorting', 'columnSizing', 'columnVisibility']`. Use `storage: 'session'` for tab-session storage. Writes default to a 250 ms debounce; `debounceMs` changes the delay. Browser storage also flushes synchronously on `pagehide`.
+Snapshots have `{ version: 1, state: { ... } }`. Supported fields are `sorting`, `columnFilters`, `globalFilter`, `columnOrder`, `columnVisibility`, `columnSizing`, `pagination`, `rowSelection`, `expanded`, `showFilters` and internal `rowOrder`. Set `fields` to an allowlist, for example `['sorting', 'columnOrder', 'columnSizing', 'columnVisibility']`. Use `storage: 'session'` for tab-session storage. Writes default to a 250 ms debounce; `debounceMs` changes the delay. Browser storage also flushes synchronously on `pagehide`.
 
 Internal row order is a list of stable IDs and survives asynchronous data loading when `isLoading` is supplied. With `onRowOrderChange`, the application owns data order: persist the returned IDs/positions in the application backend and supply the ordered records when loading. `applyTableRowOrder(data, ids, getRowId)` applies an ID list to current records while retaining new records' insertion positions.
 

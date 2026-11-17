@@ -45,3 +45,4 @@ export type {
 } from './shared/Table/Types/dataTable.types.ts'
 
 export type { TableStyleOptions } from './shared/Table/Types/styling.types.ts'
+export type { TableColumnLayout, TableColumnSettingsMessages, TableColumnSettingsProps } from './shared/Table/Types/columnSettings.types.ts'

@@ -35,6 +35,10 @@
             "types": "./dist/shared/Table/Hooks/useDataTableLogic.d.ts",
             "import": "./dist/shared/Table/Hooks/useDataTableLogic.js"
         },
+        "./column-settings": {
+            "types": "./dist/shared/Table/Components/TableColumnSettings.d.ts",
+            "import": "./dist/shared/Table/Components/TableColumnSettings.js"
+        },
         "./filters": {
             "types": "./dist/lib/Table/filters.d.ts",
             "import": "./dist/lib/Table/filters.js"
@@ -42,6 +46,10 @@
         "./types": {
             "types": "./dist/types.d.ts",
             "import": "./dist/types.js"
+        },
+        "./ai": {
+            "types": "./dist/ai.d.ts",
+            "import": "./dist/ai.js"
         },
         "./tailwind.css": "./tailwind.css",
         "./theme.css": "./theme.css",
@@ -87,6 +95,7 @@
         "@rentnerkev/inputs": "^2.8.1",
         "@rentnerkev/menu": "^1.1.0",
         "@rentnerkev/select": "^6.1.0",
+        "@tanstack/react-store": "^0.11.2",
         "@tanstack/react-table": "^9.3.1",
         "lucide-react": "^1.73.0"
     },

@@ -48,6 +48,7 @@ export interface DataTableClassNames {
     row?: string
     cell?: string
     footer?: string
+    columnSettings?: string
     /** New visual slots replace defaults; existing container slots remain additive. */
     button?: string
     buttonActive?: string
@@ -123,6 +124,8 @@ export type DataTableProps<TData extends RowData> =
             searchMaxLength?: number
             columnFilters?: boolean
             columnVisibility?: boolean
+            /** Edit order, visibility and widths in an isolated draft. Defaults to false. */
+            columnSettings?: boolean
             isRefreshing?: boolean
             error?: ReactNode
             onRetry?: () => void
@@ -207,6 +210,9 @@ export type DataTableToolbarProps<TData extends RowData> = {
         | 'searchMaxLength'
         | 'columnFilters'
         | 'columnVisibility'
+        | 'columnSettings'
+        | 'locale'
+        | 'persistence'
         | 'toolbarActions'
         | 'bulkActions'
         | 'isLoading'

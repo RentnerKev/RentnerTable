@@ -7,6 +7,8 @@ export type {
 } from './shared/Table/Types/interaction.types.ts'
 export { DataTable } from './shared/Table/Components/DataTable.tsx'
 export { TableRowActions } from './shared/Table/Components/TableRowActions.tsx'
+export { TableColumnSettings } from './shared/Table/Components/TableColumnSettings.tsx'
+export type { TableColumnLayout, TableColumnSettingsMessages, TableColumnSettingsProps } from './shared/Table/Types/columnSettings.types.ts'
 export { useDataTableLogic } from './shared/Table/Hooks/useDataTableLogic.ts'
 export { TableSurface } from './shared/Table/Components/TableSurface.tsx'
 export { TableProvider } from './shared/Table/Components/TableProvider.tsx'

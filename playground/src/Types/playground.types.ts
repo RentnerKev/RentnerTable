@@ -26,6 +26,7 @@ export interface TeamTableProps {
     isLoading: boolean
     striped: boolean
     resizableColumns: boolean
+    columnSettings: boolean
     reorderableRows: boolean
     rememberSettings: boolean
     error: boolean
@@ -68,6 +69,7 @@ export interface PlaygroundLogicResult {
         isLight: boolean
         striped: boolean
         resizableColumns: boolean
+        columnSettings: boolean
         reorderableRows: boolean
         rememberSettings: boolean
         error: boolean
@@ -78,6 +80,7 @@ export interface PlaygroundLogicResult {
         handleToggleTheme: () => void
         handleToggleStriped: () => void
         handleToggleResize: () => void
+        handleToggleColumnSettings: () => void
         handleToggleReorder: () => void
         handleToggleRemember: () => void
         handleToggleLocale: () => void
