@@ -93,6 +93,31 @@ try {
             existsSync(join(installed, documentation)),
             `${documentation} must be packaged`,
         )
+    await Bun.write(
+        join(temporary, 'ai-consumer.mjs'),
+        `
+import assert from 'node:assert/strict'
+import { getPackageInfo, getPackageDocumentation, getPackageApi, searchPackageDocumentation, getPackageExamples } from '@rentnerkev/table/ai'
+const info = getPackageInfo()
+assert.equal(info.name, '@rentnerkev/table')
+assert.equal(info.version, ${JSON.stringify(manifest.version)})
+assert.ok(getPackageDocumentation().content.includes('RentnerTable'))
+assert.equal(getPackageDocumentation('readme').path, 'README.md')
+const api = getPackageApi()
+assert.ok(api.declarations.length > 0)
+assert.ok(!Object.hasOwn(api.subpaths, './ai'))
+assert.ok(api.declarations.every(file => file.path.startsWith('dist/') && file.path.endsWith('.d.ts')))
+assert.ok(getPackageApi({subpath: '.', symbol: 'TableColumnSettings'}).declarations.length > 0)
+assert.ok(getPackageApi({subpath: './types', symbol: 'TableColumnSettingsProps'}).declarations.length > 0)
+assert.ok(searchPackageDocumentation('tanstack').length > 0)
+assert.ok(getPackageExamples().length > 0)
+assert.throws(() => getPackageApi({subpath: '../package.json'}))
+assert.throws(() => getPackageApi({symbol: 'MissingPublicSymbol'}))
+assert.throws(() => getPackageDocumentation('../package.json'))
+`,
+    )
+    run(['node', 'ai-consumer.mjs'])
+
     const readme = readFileSync(join(installed, 'README.md'), 'utf8')
     const quickStart = /```tsx\r?\n([\s\S]*?)\r?\n```/.exec(readme)?.[1]
     assert.ok(quickStart, 'The README must contain a complete TSX quick start')
@@ -107,6 +132,9 @@ import { Table, DataTable, createTableColumnHelper } from '@rentnerkev/table'
 import { Table as DirectTable } from '@rentnerkev/table/table'
 import { DataTable as DirectDataTable } from '@rentnerkev/table/data-table'
 import type { TableProps, DataTableProps } from '@rentnerkev/table/types'
+import { getPackageApi } from '@rentnerkev/table/ai'
+const apiVersion: string = getPackageApi({ symbol: 'TableColumnSettings' }).version
+if (!apiVersion) throw new Error('AI API metadata missing')
 type Person = { id: string; name: string; age: number }
 const helper = createTableColumnHelper<Person>()
 const columns = helper.columns([
@@ -157,6 +185,7 @@ if (DataTable !== DirectDataTable) throw new Error('Data table subpath differs')
             '@rentnerkev/table',
             '@rentnerkev/table/table',
             '@rentnerkev/table/data-table',
+            '@rentnerkev/table/ai',
         ],
     })
     assert.ok(build.success, build.logs.join('\n'))
@@ -180,6 +209,30 @@ const root = document.getElementById('root')
 if (root) createRoot(root).render(createElement(DataTable, { data: [], columns: [], getRowId: (_row: object, index: number) => String(index), title: 'People', resizableColumns: true, reorderableRows: true }))
 `,
     )
+    await Bun.write(
+        join(temporary, 'ui-entry.ts'),
+        "export { Table, DataTable, TableColumnSettings } from '@rentnerkev/table'\n",
+    )
+    const browserGraph = await Bun.build({
+        entrypoints: [join(temporary, 'ui-entry.ts')],
+        target: 'browser',
+        format: 'esm',
+        external: ['react', 'react-dom', 'react-dom/*'],
+    })
+    assert.ok(browserGraph.success, browserGraph.logs.join('\n'))
+    const browserSources = await Promise.all(
+        browserGraph.outputs.map((asset) => asset.text()),
+    )
+    for (const content of browserSources) {
+        assert.ok(
+            !content.includes('node:fs'),
+            'Browser UI must not include Node filesystem access',
+        )
+        assert.ok(
+            !content.includes('getPackageDocumentation'),
+            'Browser UI must not evaluate the AI entry',
+        )
+    }
     await Bun.write(
         join(temporary, 'styles.css'),
         "@import 'tailwindcss';\n@import '@rentnerkev/table/tailwind.css';\n",
@@ -220,7 +273,7 @@ if (root) createRoot(root).render(createElement(DataTable, { data: [], columns: 
         'Source maps must include their sources',
     )
     console.log(
-        'Packed consumer passed: native Node ESM, SSR, TypeScript, subpath exports, Vite browser build and packaged Tailwind styles.',
+        'Packed consumer passed: native Node ESM, read-only AI context, SSR, TypeScript, subpath exports, isolated browser UI graph, Vite browser build and packaged Tailwind styles.',
     )
 } finally {
     verifyTemporaryDirectory()

@@ -116,6 +116,7 @@ Screenshots come from the local playground with example data.
 - Typed accessor, display and grouped columns through `createTableColumnHelper`.
 - Global search and spacious, responsive text/select/date-range filters with custom renderers.
 - Keyboard sorting, Shift multi-sort, column visibility and configurable page sizes.
+- Optional column layout dialog with draft order, visibility and widths, Apply, Cancel and Reset.
 - Stable row selection across pages, selectable-row predicates and bulk actions.
 - Row action menus, expandable details and custom cell renderers.
 - Optional column resizing bounded by the available viewport, with mouse, touch and keyboard controls.
@@ -129,6 +130,10 @@ Screenshots come from the local playground with example data.
 - Paginated rendering and query preparation before row filtering. Calendar controls load on demand.
 
 `Table` provides the minimal sortable table without a toolbar or pagination. `DataTable` adds the reusable management interface; `useDataTableLogic` and `TableSurface` support custom composition.
+
+Enable `columnSettings` on `DataTable` for the complete layout dialog and `resizableColumns` for editable widths. The dialog uses existing controlled table callbacks and optional preference storage. See the [column layout guide](docs/usage.md#column-layout-dialog).
+
+Local Node.js and Bun tooling can read installed guides and public declarations through [`@rentnerkev/table/ai`](docs/usage.md#local-documentation-for-tools) without loading React UI.
 
 ## Development
 

@@ -113,6 +113,13 @@ export function App() {
                     </button>
                     <button
                         type="button"
+                        aria-pressed={state.columnSettings}
+                        onClick={handler.handleToggleColumnSettings}
+                    >
+                        {playgroundMessages[state.locale].layout}
+                    </button>
+                    <button
+                        type="button"
                         aria-pressed={state.reorderableRows}
                         onClick={handler.handleToggleReorder}
                     >
@@ -165,6 +172,7 @@ export function App() {
                     isLoading={state.isLoading}
                     striped={state.striped}
                     resizableColumns={state.resizableColumns}
+                    columnSettings={state.columnSettings}
                     reorderableRows={state.reorderableRows}
                     rememberSettings={state.rememberSettings}
                     error={state.error}

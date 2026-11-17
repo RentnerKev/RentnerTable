@@ -22,6 +22,12 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             new URLSearchParams(window.location.search).get('remember') === '1',
     )
     const [resizableColumns, setResizableColumns] = useState(rememberSettings)
+    const [columnSettings, setColumnSettings] = useState(
+        () =>
+            new URLSearchParams(window.location.search).get(
+                'column-settings',
+            ) === '1',
+    )
     const [reorderableRows, setReorderableRows] = useState(rememberSettings)
     const [error, setError] = useState(false)
     const [locale, setLocale] = useState<TableLocale>('en')
@@ -86,6 +92,7 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             isLight,
             striped,
             resizableColumns,
+            columnSettings,
             reorderableRows,
             rememberSettings,
             error,
@@ -97,6 +104,8 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             handleToggleStriped: () => setStriped((current) => !current),
             handleToggleResize: () =>
                 setResizableColumns((current) => !current),
+            handleToggleColumnSettings: () =>
+                setColumnSettings((current) => !current),
             handleToggleReorder: () =>
                 setReorderableRows((current) => !current),
             handleToggleRemember,

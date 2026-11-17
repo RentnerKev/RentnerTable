@@ -9,6 +9,7 @@ import type {
     TableOptions,
 } from '@tanstack/react-table'
 import type { TableStyleOptions } from './styling.types.ts'
+import type { TableColumnSettingsMessages } from './columnSettings.types.ts'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import type {
     TableInteractionMessages,
@@ -19,6 +20,7 @@ export type TableLocale = 'de' | 'en'
 export type TableSize = 'sm' | 'md' | 'lg'
 
 export interface TableMessages extends Partial<TableInteractionMessages> {
+    columnSettings?: Partial<TableColumnSettingsMessages>
     empty: string
     loading: string
     sortAscending: string
