@@ -53,12 +53,15 @@ export function useSingleRowExpansion<TData extends RowData>({
                 controlledRowId === undefined
                     ? requestedRowId.current
                     : controlledRowId
-            const next =
-                typeof update === 'function'
-                    ? update(expandedStateFor(currentId))
-                    : update
+            const isFunctionalUpdate = typeof update === 'function'
+            const next = isFunctionalUpdate
+                ? update(expandedStateFor(currentId))
+                : update
             if (next === true) return
-            const nextId = getExpandedRowId(next, currentId)
+            const nextId = getExpandedRowId(
+                next,
+                isFunctionalUpdate ? currentId : undefined,
+            )
             if (nextId === currentId) return
             if (tableOptions?.onExpandedChange)
                 tableOptions.onExpandedChange(expandedStateFor(nextId))
