@@ -11,6 +11,7 @@ import {
     X,
 } from 'lucide-react'
 import { getTableSlotClassName } from '../../../lib/Table/styling.ts'
+import { getTableLocale } from '../../../lib/Messages/tableMessages.ts'
 import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { TableButton } from './TableButton.tsx'
 import type { DataTableToolbarProps } from '../Types/dataTable.types.ts'
@@ -59,7 +60,7 @@ export function DataTableToolbar<TData extends RowData>({
                             >
                                 {options.title ?? state.messages.title}
                             </h2>
-                            {state.totalRows !== null && (
+                            {options.showRowCount !== false && state.totalRows !== null && (
                                 <span className="rounded-md border border-rentner-border bg-rentner-control px-2 py-0.5 text-xs tabular-nums text-rentner-muted">
                                     {state.totalRows}
                                 </span>
@@ -159,7 +160,7 @@ export function DataTableToolbar<TData extends RowData>({
                         >
                             <TableColumnSettings
                                 table={table}
-                                locale={options.locale}
+                                locale={getTableLocale(options.locale)}
                                 messages={state.messages.columnSettings}
                                 disabled={options.isLoading}
                                 scope={

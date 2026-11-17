@@ -14,13 +14,15 @@ export function readTableColumnLayout<TData extends RowData>(
     const columns = table
         .getAllFlatColumns()
         .filter((column) => !column.columns.length)
+    const currentSizing = table.atoms.columnSizing.get()
     const state = initial
         ? table.initialState
         : {
               columnOrder: table.atoms.columnOrder.get(),
               columnVisibility: table.atoms.columnVisibility.get(),
-              columnSizing: table.atoms.columnSizing.get(),
+              columnSizing: currentSizing,
           }
+    const configuredSizing = state.columnSizing ?? {}
     const known = new Set(columns.map((column) => column.id))
     const order = [
         ...new Set((state.columnOrder ?? []).filter((id) => known.has(id))),
@@ -39,25 +41,12 @@ export function readTableColumnLayout<TData extends RowData>(
         ),
         columnSizing: Object.fromEntries(
             columns.flatMap((column) => {
-                const value = column.getCanResize()
-                    ? (state.columnSizing?.[column.id] ??
-                      (initial
-                          ? Math.min(
-                                column.columnDef.maxSize ??
-                                    table.options.defaultColumn?.maxSize ??
-                                    Number.MAX_SAFE_INTEGER,
-                                Math.max(
-                                    column.columnDef.minSize ??
-                                        table.options.defaultColumn?.minSize ??
-                                        20,
-                                    column.columnDef.size ??
-                                        table.options.defaultColumn?.size ??
-                                        150,
-                                ),
-                            )
-                          : undefined))
-                    : table.atoms.columnSizing.get()[column.id]
-                return value === undefined ? [] : [[column.id, value]]
+                const sizing = column.getCanResize()
+                    ? configuredSizing
+                    : currentSizing
+                return Object.hasOwn(sizing, column.id)
+                    ? [[column.id, sizing[column.id]]]
+                    : []
             }),
         ),
     }
@@ -71,12 +60,25 @@ export function getTableColumnSettings<TData extends RowData>(
     const columns = new Map(
         table.getAllLeafColumns().map((column) => [column.id, column]),
     )
+    const defaults = table.options.defaultColumn
     const ids = [...new Set([...draft.columnOrder, ...columns.keys()])]
     return ids.flatMap((id) => {
         const column = columns.get(id)
         if (!column) return []
         const canHide = column.getCanHide()
         const canResize = column.getCanResize()
+        const min = column.columnDef.minSize ?? defaults?.minSize ?? 20
+        const max =
+            column.columnDef.maxSize ??
+            defaults?.maxSize ??
+            Number.MAX_SAFE_INTEGER
+        const configuredWidth = Math.min(
+            max,
+            Math.max(min, column.columnDef.size ?? defaults?.size ?? 150),
+        )
+        const width = Object.hasOwn(draft.columnSizing, id)
+            ? draft.columnSizing[id]
+            : configuredWidth
         return [
             {
                 id,
@@ -85,18 +87,9 @@ export function getTableColumnSettings<TData extends RowData>(
                     canHide && Object.hasOwn(draft.columnVisibility, id)
                         ? draft.columnVisibility[id] !== false
                         : column.getIsVisible(),
-                width:
-                    canResize && Object.hasOwn(draft.columnSizing, id)
-                        ? draft.columnSizing[id]
-                        : column.getSize(),
-                min:
-                    column.columnDef.minSize ??
-                    table.options.defaultColumn?.minSize ??
-                    20,
-                max:
-                    column.columnDef.maxSize ??
-                    table.options.defaultColumn?.maxSize ??
-                    Number.MAX_SAFE_INTEGER,
+                width: canResize ? width : column.getSize(),
+                min,
+                max,
                 canHide,
                 canResize,
             },
@@ -132,9 +125,10 @@ export function applyTableColumnLayout<TData extends RowData>(
         table.setColumnSizing(
             Object.fromEntries(
                 rows.flatMap((row) => {
-                    if (row.canResize) return [[row.id, row.width]]
-                    return Object.hasOwn(sizing, row.id)
-                        ? [[row.id, sizing[row.id]]]
+                    const source = row.canResize ? draft.columnSizing : sizing
+                    // Missing entries keep configured sizing automatic after Apply.
+                    return Object.hasOwn(source, row.id)
+                        ? [[row.id, source[row.id]]]
                         : []
                 }),
             ),

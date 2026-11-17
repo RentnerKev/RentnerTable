@@ -22,6 +22,11 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             new URLSearchParams(window.location.search).get('remember') === '1',
     )
     const [resizableColumns, setResizableColumns] = useState(rememberSettings)
+    const columnWidthMode =
+        new URLSearchParams(window.location.search).get('column-width-mode') ===
+        'scroll'
+            ? 'scroll'
+            : 'fit'
     const [columnSettings, setColumnSettings] = useState(
         () =>
             new URLSearchParams(window.location.search).get(
@@ -92,6 +97,7 @@ export function usePlaygroundLogic(): PlaygroundLogicResult {
             isLight,
             striped,
             resizableColumns,
+            columnWidthMode,
             columnSettings,
             reorderableRows,
             rememberSettings,

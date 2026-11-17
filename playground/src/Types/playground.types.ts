@@ -5,6 +5,7 @@ import type {
     TableRow,
     TableRowEvents,
     TableSize,
+    TableColumnWidthMode,
 } from '../../../src/index.ts'
 import type { MouseEventHandler, ReactNode } from 'react'
 import type { MenuItem } from '@rentnerkev/menu'
@@ -26,6 +27,7 @@ export interface TeamTableProps {
     isLoading: boolean
     striped: boolean
     resizableColumns: boolean
+    columnWidthMode: TableColumnWidthMode
     columnSettings: boolean
     reorderableRows: boolean
     rememberSettings: boolean
@@ -69,6 +71,7 @@ export interface PlaygroundLogicResult {
         isLight: boolean
         striped: boolean
         resizableColumns: boolean
+        columnWidthMode: TableColumnWidthMode
         columnSettings: boolean
         reorderableRows: boolean
         rememberSettings: boolean

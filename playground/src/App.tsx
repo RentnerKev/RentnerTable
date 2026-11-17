@@ -172,6 +172,7 @@ export function App() {
                     isLoading={state.isLoading}
                     striped={state.striped}
                     resizableColumns={state.resizableColumns}
+                    columnWidthMode={state.columnWidthMode}
                     columnSettings={state.columnSettings}
                     reorderableRows={state.reorderableRows}
                     rememberSettings={state.rememberSettings}

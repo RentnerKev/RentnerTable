@@ -175,6 +175,47 @@ test('is keyboard accessible in a narrow viewport with no serious accessibility 
     await expect(trigger).toBeFocused()
 })
 
+test('reset and apply restore the first-load width and keep it after reload', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 1200 })
+    const table = page.getByRole('table')
+    await expect(table).toHaveCSS('table-layout', 'fixed')
+    const width = () =>
+        table.evaluate((element) => element.getBoundingClientRect().width)
+    const firstWidth = await width()
+    const trigger = page.getByRole('button', {
+        name: 'Column settings',
+        exact: true,
+    })
+    const dialog = page.getByRole('dialog', { name: 'Column settings' })
+    const apply = dialog.getByRole('button', {
+        name: 'Apply layout',
+        exact: true,
+    })
+    await trigger.click()
+    await dialog
+        .getByRole('spinbutton', {
+            name: 'Width in pixels: Member',
+            exact: true,
+        })
+        .fill('80')
+    await apply.click()
+    await expect(dialog).not.toBeVisible()
+    await expect.poll(width).not.toBe(firstWidth)
+
+    await trigger.click()
+    await dialog
+        .getByRole('button', { name: 'Reset layout', exact: true })
+        .click()
+    await apply.click()
+    await expect(dialog).not.toBeVisible()
+    await expect.poll(width).toBe(firstWidth)
+    await page.reload()
+    await expect(table).toHaveCSS('table-layout', 'fixed')
+    await expect.poll(width).toBe(firstWidth)
+})
+
 test('editing a width with Enter never submits the surrounding application form', async ({
     page,
 }) => {

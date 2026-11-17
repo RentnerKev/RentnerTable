@@ -2,7 +2,10 @@ import type { RowData } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
 import { TextInput } from '@rentnerkev/inputs/text-input'
 import { CustomSelect } from '@rentnerkev/select/select'
-import { getColumnLabel } from '../../../lib/Table/presentation.ts'
+import {
+    getColumnLabel,
+    getTableSelectOptions,
+} from '../../../lib/Table/presentation.ts'
 import type { TableColumnFilterProps } from '../Types/dataTable.types.ts'
 
 const TableDateRangeFilter = /* @__PURE__ */ lazy(
@@ -14,6 +17,7 @@ export function TableColumnFilter<TData extends RowData>({
     locale,
     messages,
     disabled,
+    dateRangeOptions,
 }: TableColumnFilterProps<TData>) {
     const config = column.columnDef.meta?.filter
     const value = column.getFilterValue()
@@ -27,7 +31,7 @@ export function TableColumnFilter<TData extends RowData>({
     if (config?.type === 'select')
         return (
             <CustomSelect
-                options={config.options}
+                options={getTableSelectOptions(column)}
                 value={typeof value === 'string' ? value : ''}
                 onValueChange={(next) => column.setFilterValue(next)}
                 aria-label={label}
@@ -56,6 +60,11 @@ export function TableColumnFilter<TData extends RowData>({
                     placeholder={config.placeholder ?? messages.anyDate}
                     locale={locale}
                     disabled={disabled}
+                    calendarOptions={{
+                        ...dateRangeOptions,
+                        ...config.calendarOptions,
+                    }}
+                    calendarMessages={messages.calendar}
                 />
             </Suspense>
         )

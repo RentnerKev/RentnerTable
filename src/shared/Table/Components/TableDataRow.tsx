@@ -11,6 +11,7 @@ export function TableDataRow<TData extends RowData>({
     view,
     selection,
     renderExpandedRow,
+    showExpandColumn = true,
     getRowLabel,
     detailsId,
     classNames,
@@ -107,7 +108,7 @@ export function TableDataRow<TData extends RowData>({
                         />
                     </td>
                 )}
-                {renderExpandedRow && (
+                {renderExpandedRow && showExpandColumn && (
                     <td className="w-10 px-1">
                         <TableButton
                             iconOnly

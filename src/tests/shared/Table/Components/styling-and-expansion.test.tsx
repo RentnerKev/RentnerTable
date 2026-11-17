@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import type { ExpandedState } from '@tanstack/react-table'
 import {
@@ -179,6 +179,45 @@ describe('row expansion and event composition', () => {
         fireEvent.click(findRow())
         expect(screen.getByText('Details a')).toBeDefined()
         fireEvent.click(findRow())
+        expect(screen.queryByText('Details a')).toBeNull()
+    })
+
+    test('opens at most one row and reports its stable ID when toggled', () => {
+        const changes: (string | null)[] = []
+        render(
+            <DataTable
+                {...base}
+                expansionMode="single"
+                onExpandedRowIdChange={(id) => changes.push(id)}
+                tableOptions={{ initialState: { expanded: { a: true, b: true } } }}
+            />,
+        )
+        expect(screen.getByText('Details a')).toBeDefined()
+        expect(screen.queryByText('Details b')).toBeNull()
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Expand details for b' }),
+        )
+        expect(screen.queryByText('Details a')).toBeNull()
+        expect(screen.getByText('Details b')).toBeDefined()
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Collapse details for b' }),
+        )
+        expect(screen.queryByText('Details b')).toBeNull()
+        expect(changes).toEqual(['b', null])
+    })
+
+    test('renders externally controlled details without an expand column', () => {
+        const { rerender } = render(
+            <DataTable {...base} expandedRowId="a" showExpandColumn={false} />,
+        )
+        const table = screen.getByRole('table')
+        expect(within(table).getAllByRole('columnheader')).toHaveLength(2)
+        const detail = screen.getByText('Details a').closest('td')
+        expect(detail?.colSpan).toBe(2)
+        expect(within(table).queryByRole('button', { name: /details for/i })).toBeNull()
+        rerender(
+            <DataTable {...base} expandedRowId={null} showExpandColumn={false} />,
+        )
         expect(screen.queryByText('Details a')).toBeNull()
     })
 })

@@ -7,15 +7,22 @@ import {
 } from 'react'
 import type { Ref } from 'react'
 import type { RowData } from '@tanstack/react-table'
-import type { RentnerTableInstance } from '../Types/table.types.ts'
+import type {
+    RentnerTableInstance,
+    TableColumnWidthMode,
+} from '../Types/table.types.ts'
 import type { ColumnResizeLogicResult } from '../Types/interaction.types.ts'
-import { getTableColumnLayout } from '../../../lib/Table/columnLayout.ts'
+import {
+    getTableColumnLayout,
+    getTableColumnMinimumWidth,
+} from '../../../lib/Table/columnLayout.ts'
 
 export function useTableColumnResizeLogic<TData extends RowData>(
     table: RentnerTableInstance<TData>,
     enabled: boolean,
     extraWidth: number,
     forwardedRef?: Ref<HTMLTableElement>,
+    widthMode: TableColumnWidthMode = 'fit',
 ): ColumnResizeLogicResult {
     const element = useRef<HTMLTableElement | null>(null)
     useImperativeHandle(forwardedRef, () => {
@@ -26,7 +33,7 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         return element.current
     }, [])
     const [ready, setReady] = useState(false)
-    const [availableWidth, setAvailableWidth] = useState(
+    const [viewportWidth, setViewportWidth] = useState(
         Number.POSITIVE_INFINITY,
     )
     useLayoutEffect(() => {
@@ -43,7 +50,7 @@ export function useTableColumnResizeLogic<TData extends RowData>(
                 ? Number.parseFloat(minimum)
                 : 0
             if (viewport.clientWidth > 0)
-                setAvailableWidth(
+                setViewportWidth(
                     Math.max(
                         viewport.clientWidth,
                         Number.isFinite(minimumWidth) ? minimumWidth : 0,
@@ -62,7 +69,10 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         // Configured widths are weights; mounting must not overwrite them or persist a synthetic resize.
         setReady(true)
     }, [enabled, ready])
-    const columns = getTableColumnLayout(table, availableWidth - extraWidth)
+    const minimum =
+        enabled && widthMode === 'scroll' ? getTableColumnMinimumWidth(table) : 0
+    const availableWidth = Math.max(minimum, viewportWidth - extraWidth)
+    const columns = getTableColumnLayout(table, availableWidth)
     const widths = useMemo(
         () => columns.map((column) => ({ id: column.id, width: column.size })),
         [columns],
@@ -70,7 +80,7 @@ export function useTableColumnResizeLogic<TData extends RowData>(
     return {
         state: {
             fixed: enabled && ready,
-            availableWidth: Math.max(0, availableWidth - extraWidth),
+            availableWidth,
             width: widths.reduce(
                 (sum, column) => sum + column.width,
                 extraWidth,

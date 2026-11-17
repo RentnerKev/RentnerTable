@@ -1,9 +1,19 @@
 import type {
     TableLocale,
+    TableLocaleOption,
     TableMessages,
 } from '../../shared/Table/Types/table.types.ts'
 
-const messages: Record<TableLocale, TableMessages> = {
+type TableMessageCatalog = Omit<TableMessages, 'rowRange'> & {
+    rowRange: (
+        first: number,
+        last: number,
+        total: number | null,
+        rowLabel?: string,
+    ) => string
+}
+
+const messages: Record<TableLocale, TableMessageCatalog> = {
     de: {
         resizeColumn: (label) => `Breite von ${label} ändern`,
         resetColumnSize: (label) => `Breite von ${label} zurücksetzen`,
@@ -45,10 +55,10 @@ const messages: Record<TableLocale, TableMessages> = {
         lastPage: 'Letzte Seite',
         pageInfo: (page, pages) =>
             pages === null ? `Seite ${page}` : `Seite ${page} von ${pages}`,
-        rowRange: (first, last, total) =>
+        rowRange: (first, last, total, rowLabel) =>
             total === null
-                ? `${first}–${last} Einträge`
-                : `${first}–${last} von ${total} Einträgen`,
+                ? `${first}–${last} ${rowLabel ?? 'Einträge'}`
+                : `${first}–${last} von ${total} ${rowLabel ?? 'Einträgen'}`,
         results: (count) => `${count} Einträge`,
         selected: (count) => `${count} ausgewählt`,
         clearSelection: 'Auswahl aufheben',
@@ -99,10 +109,10 @@ const messages: Record<TableLocale, TableMessages> = {
         lastPage: 'Last page',
         pageInfo: (page, pages) =>
             pages === null ? `Page ${page}` : `Page ${page} of ${pages}`,
-        rowRange: (first, last, total) =>
+        rowRange: (first, last, total, rowLabel = 'entries') =>
             total === null
-                ? `${first}–${last} entries`
-                : `${first}–${last} of ${total} entries`,
+                ? `${first}–${last} ${rowLabel}`
+                : `${first}–${last} of ${total} ${rowLabel}`,
         results: (count) => `${count} entries`,
         selected: (count) => `${count} selected`,
         clearSelection: 'Clear selection',
@@ -117,23 +127,50 @@ export function getTableMessages(locale: TableLocale = 'en'): TableMessages {
     return { ...messages[locale] }
 }
 
+export function getTableLocale(locale: TableLocaleOption = 'en'): TableLocale {
+    return typeof locale === 'string' ? locale : locale.code
+}
+
+function definedMessages<T extends object>(overrides?: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(overrides ?? {}).filter(([, value]) => value !== undefined),
+    ) as Partial<T>
+}
+
 export function resolveTableMessages(
-    locale: TableLocale = 'en',
+    locale?: TableLocaleOption,
     overrides?: Partial<TableMessages>,
+    rowLabel?: string,
 ): TableMessages {
-    const resolved = Object.assign(
-        getTableMessages(locale),
-        Object.fromEntries(
-            Object.entries(overrides ?? {}).filter(
-                ([, value]) => value !== undefined,
-            ),
-        ),
-    )
+    const code = getTableLocale(locale)
+    const localeMessages =
+        typeof locale === 'object' ? locale.messages : undefined
+    const customMessages = {
+        ...definedMessages(localeMessages),
+        ...definedMessages(overrides),
+    }
+    const resolved = { ...getTableMessages(code), ...customMessages }
+    if (localeMessages?.columnSettings || overrides?.columnSettings) {
+        resolved.columnSettings = {
+            ...definedMessages(localeMessages?.columnSettings),
+            ...definedMessages(overrides?.columnSettings),
+        }
+    }
+    if (localeMessages?.calendar || overrides?.calendar) {
+        resolved.calendar = {
+            ...definedMessages(localeMessages?.calendar),
+            ...definedMessages(overrides?.calendar),
+        }
+    }
+    if (customMessages.rowRange === undefined && rowLabel !== undefined) {
+        resolved.rowRange = (first, last, total) =>
+            messages[code].rowRange(first, last, total, rowLabel)
+    }
     if (
-        overrides?.noResults !== undefined &&
-        overrides.noResultsFor === undefined
+        customMessages.noResults !== undefined &&
+        customMessages.noResultsFor === undefined
     ) {
-        const title = overrides.noResults
+        const title = customMessages.noResults
         resolved.noResultsFor = (summary) => `${title} — ${summary}`
     }
     return resolved

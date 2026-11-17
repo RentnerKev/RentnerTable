@@ -9,16 +9,16 @@ export default function TableDateRangeFilter({
     label,
     placeholder,
     locale,
+    calendarOptions,
+    calendarMessages,
     disabled,
 }: TableDateRangeFilterProps) {
     const portalContainer = useTableOverlay()
+    const { from, to } = getTableDateRange(value)
     return (
         <RangeCalendar
             valueFormat="iso-date"
-            value={[
-                getTableDateRange(value).from ?? null,
-                getTableDateRange(value).to ?? null,
-            ]}
+            value={[from ?? null, to ?? null]}
             onChange={(range) =>
                 onValueChange({
                     from: range?.[0] ?? undefined,
@@ -27,7 +27,12 @@ export default function TableDateRangeFilter({
             }
             aria-label={label}
             placeholder={placeholder ?? label}
-            locale={locale}
+            locale={calendarOptions?.locale ?? locale}
+            weekStartsOn={calendarOptions?.weekStartsOn}
+            showHolidays={calendarOptions?.showHolidays}
+            fastEdit={calendarOptions?.fastEdit}
+            backdrop={calendarOptions?.backdrop}
+            messages={calendarMessages}
             controlSize="md"
             isDeletable
             disabled={disabled}

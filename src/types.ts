@@ -15,7 +15,9 @@ export type {
 } from './shared/Table/Types/interaction.types.ts'
 export type {
     TableColumn,
+    TableColumnWidthMode,
     TableLocale,
+    TableLocaleOption,
     TableLogicOptions,
     TableLogicResult,
     TableMessages,
@@ -28,6 +30,7 @@ export type {
     TableColumnMeta,
     TableColumnFilter,
     TableDateRange,
+    TableDateRangeOptions,
 } from './shared/Table/Types/column.types.ts'
 export type { TableProviderProps } from './shared/Table/Types/dataTable.types.ts'
 export type {
@@ -38,6 +41,8 @@ export type {
     DataTableClassNames,
     TableRow,
     TableColumnInstance,
+    TablePageSizeOption,
+    TableSearchValue,
     TableSurfaceProps,
     DataTableToolbarProps,
     DataTablePaginationProps,

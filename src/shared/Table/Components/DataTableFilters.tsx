@@ -6,6 +6,7 @@ import { TableColumnFilter } from './TableColumnFilter.tsx'
 export function DataTableFilters<TData extends RowData>({
     state,
     locale,
+    dateRangeOptions,
     disabled,
     className = '',
 }: DataTableFiltersProps<TData>) {
@@ -31,6 +32,7 @@ export function DataTableFilters<TData extends RowData>({
                                     column={column}
                                     locale={locale}
                                     messages={state.messages}
+                                    dateRangeOptions={dateRangeOptions}
                                     disabled={disabled}
                                 />
                             </fieldset>

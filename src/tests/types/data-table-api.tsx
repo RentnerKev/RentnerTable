@@ -131,3 +131,24 @@ export const rowExpansionAndDesign: DataTableProps<Member> = {
         event.currentTarget satisfies HTMLTableRowElement
     },
 }
+
+export const consumerOptions: DataTableProps<Member> = {
+    ...props,
+    expansionMode: 'single',
+    expandedRowId: 'one',
+    onExpandedRowIdChange: (id) => id satisfies string | null,
+    showExpandColumn: false,
+    columnWidthMode: 'scroll',
+    getSearchValues: (row) => [row.name, row.active],
+    pageSizeOptions: [{ value: 10, label: '10 members' }, 25],
+    rowLabel: 'members',
+    showRowCount: false,
+    locale: {
+        code: 'en',
+        messages: {
+            columnSettings: { apply: 'Apply columns' },
+            calendar: { apply: 'Apply date range' },
+        },
+    },
+    dateRangeOptions: { showHolidays: true, weekStartsOn: 1 },
+}

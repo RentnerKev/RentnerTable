@@ -8,6 +8,42 @@ import type {
 } from '../../shared/Table/Types/table.types.ts'
 import type { TableColumnInstance } from '../../shared/Table/Types/dataTable.types.ts'
 
+const selectOptionsCache = /* @__PURE__ */ new WeakMap<
+    object,
+    { model: object; options: readonly { value: string; label: string }[] }
+>()
+
+export function getTableSelectOptions<TData extends RowData>(
+    column: TableColumnInstance<TData>,
+): readonly { value: string; label: string }[] {
+    const config = column.columnDef.meta?.filter
+    if (config?.type !== 'select') return []
+    if (config.options) return config.options
+
+    const model = column.table.getPreFilteredRowModel()
+    const cached = selectOptionsCache.get(column)
+    if (cached?.model === model) return cached.options
+
+    const values = new Set<string>()
+    const addValue = (value: unknown) => {
+        if (typeof value === 'string' && value !== '') values.add(value)
+    }
+    for (const row of model.flatRows) {
+        const value = row.getValue(column.id)
+        if (config.match === 'includes') {
+            if (Array.isArray(value)) value.forEach(addValue)
+        } else {
+            addValue(value)
+        }
+    }
+
+    const options = [...values]
+        .toSorted()
+        .map((value) => ({ value, label: value }))
+    selectOptionsCache.set(column, { model, options })
+    return options
+}
+
 export function getColumnLabel<TData extends RowData>(
     column: TableColumnInstance<TData>,
 ): string {
@@ -23,10 +59,10 @@ export function prepareTableColumns<TData extends RowData>(
     columns: readonly TableColumn<TData>[],
 ): TableColumn<TData>[] {
     return columns.map((column) => {
-        const kind = column.meta?.filter?.type
-        let filterFn: 'text' | 'equals' | 'dateRange' = 'text'
-        if (kind === 'select') filterFn = 'equals'
-        if (kind === 'dateRange') filterFn = 'dateRange'
+        const filter = column.meta?.filter
+        let filterFn: 'text' | 'equals' | 'includes' | 'dateRange' = 'text'
+        if (filter?.type === 'select') filterFn = filter.match ?? 'equals'
+        if (filter?.type === 'dateRange') filterFn = 'dateRange'
         return {
             ...column,
             filterFn: column.filterFn ?? filterFn,

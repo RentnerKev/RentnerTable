@@ -1,11 +1,14 @@
 import type { RowData } from '@tanstack/react-table'
 import type { RentnerTableInstance } from '../../shared/Table/Types/table.types.ts'
-import { fitColumnWidths } from './columnSizing.ts'
+import { fitColumnWidths, getMinimumColumnWidth } from './columnSizing.ts'
 import type { ResizeColumn } from './columnSizing.ts'
 
 interface ColumnLayoutCache {
     inputs: readonly unknown[]
-    columns: readonly ResizeColumn[]
+    configured: readonly ResizeColumn[]
+    minimumWidth: number
+    fill: boolean
+    fitted?: { availableWidth: number; columns: readonly ResizeColumn[] }
 }
 
 interface ColumnResizeBounds {
@@ -57,10 +60,9 @@ export function getColumnLayoutResizeBounds(
 // and their layouts be collected without keeping a table instance in the cache.
 const layouts = new WeakMap<object, ColumnLayoutCache>()
 
-export function getTableColumnLayout<TData extends RowData>(
+function getConfiguredColumnLayout<TData extends RowData>(
     table: RentnerTableInstance<TData>,
-    availableWidth: number,
-): readonly ResizeColumn[] {
+): ColumnLayoutCache {
     const columns = table.getVisibleLeafColumns()
     const sizing = table.state.columnSizing
     const defaults = table.options.defaultColumn
@@ -71,14 +73,13 @@ export function getTableColumnLayout<TData extends RowData>(
         defaults?.maxSize,
         defaults?.enableResizing,
         table.options.enableColumnResizing,
-        availableWidth,
     ]
     const cached = layouts.get(columns)
     if (
         cached &&
         inputs.every((input, index) => Object.is(input, cached.inputs[index]))
     )
-        return cached.columns
+        return cached
     const configured = columns.map((column) => ({
         id: column.id,
         size: column.getSize(),
@@ -89,14 +90,41 @@ export function getTableColumnLayout<TData extends RowData>(
             Number.MAX_SAFE_INTEGER,
         resizable: column.getCanResize(),
     }))
-    const fitted =
-        availableWidth === Number.POSITIVE_INFINITY
-            ? configured
-            : fitColumnWidths(
-                  configured,
-                  availableWidth,
-                  Object.keys(sizing).length === 0,
-              )
-    layouts.set(columns, { inputs, columns: fitted })
-    return fitted
+    const layout = {
+        inputs,
+        configured,
+        minimumWidth: getMinimumColumnWidth(configured),
+        // Fixed widths still constrain the budget when the resizable leaves are automatic.
+        fill:
+            Object.keys(sizing).length === 0 ||
+            !table.getAllLeafColumns().some(
+                (column) =>
+                    column.getCanResize() && Object.hasOwn(sizing, column.id),
+            ),
+    }
+    layouts.set(columns, layout)
+    return layout
+}
+
+export function getTableColumnMinimumWidth<TData extends RowData>(
+    table: RentnerTableInstance<TData>,
+): number {
+    return getConfiguredColumnLayout(table).minimumWidth
+}
+
+export function getTableColumnLayout<TData extends RowData>(
+    table: RentnerTableInstance<TData>,
+    availableWidth: number,
+): readonly ResizeColumn[] {
+    const layout = getConfiguredColumnLayout(table)
+    if (availableWidth === Number.POSITIVE_INFINITY) return layout.configured
+    if (layout.fitted && Object.is(availableWidth, layout.fitted.availableWidth))
+        return layout.fitted.columns
+    const columns = fitColumnWidths(
+        layout.configured,
+        availableWidth,
+        layout.fill,
+    )
+    layout.fitted = { availableWidth, columns }
+    return columns
 }
