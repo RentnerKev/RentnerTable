@@ -47,7 +47,9 @@ export const props: DataTableProps<Member> = {
     renderExpandedRow: (row) => row.original.joined,
     resizableColumns: true,
     columnSettings: true,
-    messages: { columnSettings: { title: 'Choose a layout', apply: 'Save columns' } },
+    messages: {
+        columnSettings: { title: 'Choose a layout', apply: 'Save columns' },
+    },
     reorderableRows: true,
     onRowOrderChange: (rows, change) => {
         rows[change.toIndex]?.active satisfies boolean | undefined

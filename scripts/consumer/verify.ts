@@ -220,10 +220,18 @@ if (root) createRoot(root).render(createElement(DataTable, { data: [], columns: 
         external: ['react', 'react-dom', 'react-dom/*'],
     })
     assert.ok(browserGraph.success, browserGraph.logs.join('\n'))
-    const browserSources = await Promise.all(browserGraph.outputs.map((asset) => asset.text()))
+    const browserSources = await Promise.all(
+        browserGraph.outputs.map((asset) => asset.text()),
+    )
     for (const content of browserSources) {
-        assert.ok(!content.includes('node:fs'), 'Browser UI must not include Node filesystem access')
-        assert.ok(!content.includes('getPackageDocumentation'), 'Browser UI must not evaluate the AI entry')
+        assert.ok(
+            !content.includes('node:fs'),
+            'Browser UI must not include Node filesystem access',
+        )
+        assert.ok(
+            !content.includes('getPackageDocumentation'),
+            'Browser UI must not evaluate the AI entry',
+        )
     }
     await Bun.write(
         join(temporary, 'styles.css'),

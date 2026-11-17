@@ -24,18 +24,18 @@ The package supports React 19, React DOM 19, Tailwind CSS 4 and TanStack Table 9
 
 ## Components and entry points
 
-| Entry                            | API                                                  |
-| -------------------------------- | ---------------------------------------------------- |
-| `@rentnerkev/table`              | Public components, hooks, helpers, filters and types |
-| `@rentnerkev/table/table`        | `Table`, a minimal sortable table                    |
-| `@rentnerkev/table/data-table`   | `DataTable`, the complete table interface            |
-| `@rentnerkev/table/hooks`        | `useDataTableLogic`                                  |
-| `@rentnerkev/table/column-settings` | `TableColumnSettings`, a standalone layout dialog  |
-| `@rentnerkev/table/filters`      | Portable text, equality and date-range filters       |
-| `@rentnerkev/table/types`        | Type-only contracts                                  |
-| `@rentnerkev/table/ai`           | Read-only installed documentation for Node.js/Bun    |
-| `@rentnerkev/table/tailwind.css` | Theme, scanned library classes and control styles    |
-| `@rentnerkev/table/theme.css`    | Shared theme token mapping only                      |
+| Entry                               | API                                                  |
+| ----------------------------------- | ---------------------------------------------------- |
+| `@rentnerkev/table`                 | Public components, hooks, helpers, filters and types |
+| `@rentnerkev/table/table`           | `Table`, a minimal sortable table                    |
+| `@rentnerkev/table/data-table`      | `DataTable`, the complete table interface            |
+| `@rentnerkev/table/hooks`           | `useDataTableLogic`                                  |
+| `@rentnerkev/table/column-settings` | `TableColumnSettings`, a standalone layout dialog    |
+| `@rentnerkev/table/filters`         | Portable text, equality and date-range filters       |
+| `@rentnerkev/table/types`           | Type-only contracts                                  |
+| `@rentnerkev/table/ai`              | Read-only installed documentation for Node.js/Bun    |
+| `@rentnerkev/table/tailwind.css`    | Theme, scanned library classes and control styles    |
+| `@rentnerkev/table/theme.css`       | Shared theme token mapping only                      |
 
 `DataTable` requires `data`, `columns` and `getRowId`. Supply a stable string ID from the record rather than a page-relative array index. `getRowLabel` gives selection and detail buttons a readable accessible name.
 
@@ -51,19 +51,32 @@ that have not been applied. The default remains the existing visibility menu.
 ```tsx
 import { DataTable, createTableColumnHelper } from '@rentnerkev/table'
 
-interface Member { id: string; name: string; role: string }
+interface Member {
+    id: string
+    name: string
+    role: string
+}
 const column = createTableColumnHelper<Member>()
 const columns = column.columns([
     column.accessor('name', {
-        header: 'Member', enableHiding: false,
-        size: 220, minSize: 100, maxSize: 480,
+        header: 'Member',
+        enableHiding: false,
+        size: 220,
+        minSize: 100,
+        maxSize: 480,
     }),
     column.accessor('role', {
-        header: 'Role', size: 160, minSize: 80, maxSize: 320,
+        header: 'Role',
+        size: 160,
+        minSize: 80,
+        maxSize: 320,
     }),
 ])
 
-export function MemberTable({ members, accountId }: {
+export function MemberTable({
+    members,
+    accountId,
+}: {
     members: readonly Member[]
     accountId: string
 }) {
@@ -131,7 +144,12 @@ import {
 console.log(getPackageInfo().version)
 console.log(getPackageDocumentation('usage').content)
 console.log(getPackageDocumentation('readme').path)
-console.log(getPackageApi({ subpath: './column-settings', symbol: 'TableColumnSettings' }))
+console.log(
+    getPackageApi({
+        subpath: './column-settings',
+        symbol: 'TableColumnSettings',
+    }),
+)
 console.log(searchPackageDocumentation('columnSettings'))
 console.log(getPackageExamples())
 ```

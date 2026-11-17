@@ -111,7 +111,11 @@ export function getPackageApi(
             realpathSync(new URL('dist/', packageRoot)),
             realpathSync(fileURLToPath(url)),
         )
-        if (isAbsolute(location) || location === '..' || location.startsWith('..' + sep)) {
+        if (
+            isAbsolute(location) ||
+            location === '..' ||
+            location.startsWith('..' + sep)
+        ) {
             throw new Error('Declaration must remain inside packaged dist')
         }
         const existing = declarations.get(url.href)

@@ -111,7 +111,11 @@ export function App() {
                     >
                         {playgroundMessages[state.locale].resize}
                     </button>
-                    <button type="button" aria-pressed={state.columnSettings} onClick={handler.handleToggleColumnSettings}>
+                    <button
+                        type="button"
+                        aria-pressed={state.columnSettings}
+                        onClick={handler.handleToggleColumnSettings}
+                    >
                         {playgroundMessages[state.locale].layout}
                     </button>
                     <button

@@ -22,7 +22,9 @@ const Menu = /* @__PURE__ */ lazy(() =>
 )
 
 const TableColumnSettings = /* @__PURE__ */ lazy(() =>
-    import('./TableColumnSettings.tsx').then((module) => ({ default: module.TableColumnSettings })),
+    import('./TableColumnSettings.tsx').then((module) => ({
+        default: module.TableColumnSettings,
+    })),
 ) as typeof import('./TableColumnSettings.tsx').TableColumnSettings
 
 export function DataTableToolbar<TData extends RowData>({
@@ -140,20 +142,6 @@ export function DataTableToolbar<TData extends RowData>({
                         </TableButton>
                     )}
                     {options.columnSettings ? (
-                        <Suspense fallback={<TableButton slot="columnVisibilityButton" disabled aria-busy="true"><Columns3 aria-hidden="true" className="size-4" />{state.messages.columns}</TableButton>}>
-                            <TableColumnSettings
-                                table={table}
-                                locale={options.locale}
-                                messages={state.messages.columnSettings}
-                                disabled={options.isLoading}
-                                scope={typeof options.persistence === 'string' ? options.persistence : options.persistence ? options.persistence.key : undefined}
-                                persistenceStatus={state.persistenceStatus}
-                                persistenceError={state.persistenceError}
-                                onFlush={handler.handleFlushState}
-                                onReload={handler.handleReloadState}
-                            />
-                        </Suspense>
-                    ) : options.columnVisibility !== false && (
                         <Suspense
                             fallback={
                                 <TableButton
@@ -166,22 +154,36 @@ export function DataTableToolbar<TData extends RowData>({
                                         className="size-4"
                                     />
                                     {state.messages.columns}
-                                    <ChevronDown
-                                        aria-hidden="true"
-                                        className="size-3"
-                                    />
                                 </TableButton>
                             }
                         >
-                            <Menu
-                                ariaLabel={state.messages.columns}
-                                items={state.columnItems}
-                                align="end"
-                                controlSize="sm"
+                            <TableColumnSettings
+                                table={table}
+                                locale={options.locale}
+                                messages={state.messages.columnSettings}
                                 disabled={options.isLoading}
-                                asChild
-                                trigger={
-                                    <TableButton slot="columnVisibilityButton">
+                                scope={
+                                    typeof options.persistence === 'string'
+                                        ? options.persistence
+                                        : options.persistence
+                                          ? options.persistence.key
+                                          : undefined
+                                }
+                                persistenceStatus={state.persistenceStatus}
+                                persistenceError={state.persistenceError}
+                                onFlush={handler.handleFlushState}
+                                onReload={handler.handleReloadState}
+                            />
+                        </Suspense>
+                    ) : (
+                        options.columnVisibility !== false && (
+                            <Suspense
+                                fallback={
+                                    <TableButton
+                                        slot="columnVisibilityButton"
+                                        disabled
+                                        aria-busy="true"
+                                    >
                                         <Columns3
                                             aria-hidden="true"
                                             className="size-4"
@@ -193,8 +195,30 @@ export function DataTableToolbar<TData extends RowData>({
                                         />
                                     </TableButton>
                                 }
-                            />
-                        </Suspense>
+                            >
+                                <Menu
+                                    ariaLabel={state.messages.columns}
+                                    items={state.columnItems}
+                                    align="end"
+                                    controlSize="sm"
+                                    disabled={options.isLoading}
+                                    asChild
+                                    trigger={
+                                        <TableButton slot="columnVisibilityButton">
+                                            <Columns3
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            {state.messages.columns}
+                                            <ChevronDown
+                                                aria-hidden="true"
+                                                className="size-3"
+                                            />
+                                        </TableButton>
+                                    }
+                                />
+                            </Suspense>
+                        )
                     )}
                     {state.hasFilters && (
                         <TableButton
