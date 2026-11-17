@@ -270,3 +270,118 @@ test('native translated callbacks preserve exact label and position argument con
     fireEvent.keyDown(handle, { key: 'Escape' })
     expect(dragCancel.mock.calls).toEqual([['Alpha']])
 })
+
+function LayoutRows({
+    ids,
+    activeIndex,
+}: {
+    ids: readonly string[]
+    activeIndex: number
+}) {
+    const Group = useTableRowDragContext()
+    if (!Group) return null
+    return (
+        <div style={{ overflow: 'auto' }}>
+            <table>
+                {ids.map((id, index) =>
+                    createElement(Group, {
+                        key: id,
+                        id,
+                        label: id,
+                        children: (handle) => (
+                            <>
+                                <tr>
+                                    <td>
+                                        {handle}
+                                        {id}
+                                    </td>
+                                </tr>
+                                {index === activeIndex && (
+                                    <tr>
+                                        <td>Expanded details</td>
+                                    </tr>
+                                )}
+                            </>
+                        ),
+                    }),
+                )}
+            </table>
+        </div>
+    )
+}
+
+async function inspectCollisionFrame(count: number, from: number, to: number) {
+    const ids = Array.from({ length: count }, (_, index) => `layout-${index}`)
+    const result = render(
+        <TableNativeReorderProvider
+            rows={ids.map((id) => ({ id }))}
+            disabled={false}
+            messages={getTableMessages('en')}
+            getLabel={(id) => id}
+            onReorder={() => undefined}
+        >
+            <LayoutRows ids={ids} activeIndex={from} />
+        </TableNativeReorderProvider>,
+    )
+    const groups = [...result.container.querySelectorAll('tbody')]
+    const source = groups[from]
+    const viewport = source?.closest('table')?.parentElement
+    if (!source || !viewport) throw new Error('Layout fixture missing')
+    Object.defineProperty(viewport, 'clientWidth', { value: 320 })
+    Object.defineProperty(viewport, 'clientHeight', { value: 400 })
+    Object.defineProperty(viewport, 'scrollHeight', { value: 800 })
+    viewport.getBoundingClientRect = () => new DOMRect(10, 0, 320, 400)
+    const rowHeight = 160 / count
+    const sourceHeight = 20
+    const topFor = (index: number) =>
+        100 + index * rowHeight + (index > from ? sourceHeight - rowHeight : 0)
+    for (const [index, node] of groups.entries())
+        node.getBoundingClientRect = () =>
+            new DOMRect(
+                10,
+                topFor(index) - viewport.scrollTop,
+                320,
+                index === from ? sourceHeight : rowHeight,
+            )
+    const sourceRect = mock(source.getBoundingClientRect)
+    source.getBoundingClientRect = sourceRect
+    const handle = screen.getByRole('button', { name: `Move ${ids[from]}` })
+    fireEvent.pointerDown(handle, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+        button: 0,
+        clientX: 20,
+        clientY: topFor(from) + sourceHeight / 2,
+    })
+    fireEvent.pointerMove(document, {
+        pointerId: 1,
+        clientX: 20,
+        clientY: topFor(to) + rowHeight / 2 - 16,
+    })
+    viewport.scrollTop = 16
+    sourceRect.mockClear()
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)))
+    const sourceReads = sourceRect.mock.calls.length
+    expect(sourceRect.mock.calls.length).toBe(1)
+    for (const [index, node] of groups.entries()) {
+        const shifted =
+            from < to
+                ? index > from && index <= to
+                : index >= to && index < from
+        const offset = from < to ? -sourceHeight : sourceHeight
+        expect(node.style.transform).toBe(
+            shifted ? `translate3d(0, ${offset}px, 0)` : '',
+        )
+    }
+    fireEvent.keyDown(handle, { key: 'Escape' })
+    result.unmount()
+    return sourceReads
+}
+
+test('native collision frames share one source layout read across row counts and retain full-group sibling transforms', async () => {
+    const small = await inspectCollisionFrame(4, 1, 2)
+    const large = await inspectCollisionFrame(40, 1, 38)
+    const upward = await inspectCollisionFrame(40, 38, 1)
+    expect([small, large, upward]).toEqual([1, 1, 1])
+})

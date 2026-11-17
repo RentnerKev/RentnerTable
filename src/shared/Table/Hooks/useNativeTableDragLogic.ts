@@ -229,12 +229,12 @@ function createController(
     }
     const onBlur = () => finish(false, false)
     const onResize = () => finish(false)
-    const rectFor = (id: string, node: HTMLElement) => {
+    const rectFor = (id: string, node: HTMLElement, offset?: number) => {
         const original = geometry.get(id)
         const current = session
         if (!original || !current) return node.getBoundingClientRect()
         const scrollOffset =
-            current.source.getBoundingClientRect().top - current.top
+            offset ?? current.source.getBoundingClientRect().top - current.top
         return {
             top: original.top + scrollOffset,
             bottom: original.bottom + scrollOffset,
@@ -247,9 +247,10 @@ function createController(
         const order = items()
         const from = order.indexOf(current.id)
         const to = order.indexOf(current.over ?? current.id)
-        for (const [id, node] of nodes) {
-            if (id === current.id) continue
-            const index = order.indexOf(id)
+        for (let index = 0; index < order.length; index++) {
+            const id = order[index]
+            const node = nodes.get(id)
+            if (!node || id === current.id) continue
             const offset =
                 from < to && index > from && index <= to
                     ? -current.height
@@ -303,7 +304,7 @@ function createController(
             for (const id of items()) {
                 const node = nodes.get(id)
                 if (!node) continue
-                const rect = rectFor(id, node)
+                const rect = rectFor(id, node, bounds.top - current.top)
                 if (pointerY >= rect.top && pointerY <= rect.bottom) {
                     over = id
                     break
