@@ -18,6 +18,8 @@ export type TableColumnFilter =
       }
 
 export interface TableColumnMeta {
+    /** Classes for this column's filter field, including responsive layout. */
+    filterClassName?: string
     label?: string
     align?: 'left' | 'center' | 'right'
     headerClassName?: string

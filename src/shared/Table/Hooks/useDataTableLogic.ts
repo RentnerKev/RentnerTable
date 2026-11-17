@@ -203,8 +203,11 @@ export function useDataTableLogic<TData extends RowData>({
         () =>
             [...new Set([...pageSizeOptions, currentPageSize])]
                 .toSorted((left, right) => left - right)
-                .map((value) => ({ value, label: String(value) })),
-        [pageSizeOptions, currentPageSize],
+                .map((value) => ({
+                    value,
+                    label: messages.pageSizeOption?.(value) ?? String(value),
+                })),
+        [pageSizeOptions, currentPageSize, messages],
     )
 
     if (

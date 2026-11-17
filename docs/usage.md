@@ -361,3 +361,45 @@ toggles only for the first click in that sequence, preventing an immediate
 open/close. Row and cell click handlers run before automatic expansion and can
 call `event.preventDefault()` to veto it. Cell handlers run before row handlers;
 controls are excluded from row click and double-click callbacks.
+
+## Compact pagination and responsive filters
+
+Page-size options include their unit by default (`10 rows` / `10 Zeilen`). The
+`Rows per page` label stays available to assistive technology without taking
+space beside the select. Override `messages.pageSizeOption(count)` for a domain
+unit, such as products or invoices. Numeric option values, server pagination and
+custom page-size lists keep their existing contracts. To show the separate label,
+set `classNames.pageSizeLabel` to `not-sr-only`.
+
+Filter layout stays application-defined. Use provider or instance slots
+`filterGrid` and `filterField` for the shared layout, and column metadata
+`filterClassName` for individual widths or responsive spans. Classes do not
+change column widths, filter values, filter types or persistence. Filter
+fieldsets expose `data-column-id` for scoped styling and inspection.
+
+```tsx
+const columns = column.columns([
+    column.accessor('id', {
+        header: 'ID',
+        meta: { filterClassName: 'w-full sm:w-28 sm:grow-0' },
+    }),
+    column.accessor('title', {
+        header: 'Title',
+        meta: { filterClassName: 'w-full sm:min-w-64 sm:flex-1' },
+    }),
+])
+
+<DataTable
+    data={entries}
+    columns={columns}
+    messages={{ pageSizeOption: (count) => `${count} products` }}
+    classNames={{
+        filterGrid: 'flex flex-wrap gap-3 p-3',
+        filterField: 'm-0 min-w-0 border-0 p-0',
+    }}
+/>
+```
+
+Consumers using Tailwind must include their metadata classes in their normal
+source scan. No application-specific IDs, dimensions or business labels are
+hardcoded into the package.

@@ -35,7 +35,13 @@ export function DataTablePagination<TData extends RowData>({
             {pagination && (
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                     <div className="flex items-center gap-2">
-                        <span id={`${state.id}-page-size`}>
+                        <span
+                            id={`${state.id}-page-size`}
+                            className={getTableSlotClassName(
+                                'sr-only',
+                                classNames.pageSizeLabel,
+                            )}
+                        >
                             {state.messages.rowsPerPage}
                         </span>
                         <CustomSelect

@@ -41,6 +41,8 @@ export interface DataTableClassNames {
     root?: string
     toolbar?: string
     filters?: string
+    filterGrid?: string
+    filterField?: string
     viewport?: string
     table?: string
     header?: string
@@ -61,6 +63,7 @@ export interface DataTableClassNames {
     paginationNav?: string
     pageInfo?: string
     pageSizeSelect?: string
+    pageSizeLabel?: string
     sortButton?: string
     sortIcon?: string
     headerDivider?: string

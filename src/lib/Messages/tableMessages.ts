@@ -39,6 +39,8 @@ const messages: Record<TableLocale, TableMessages> = {
         anyDate: 'Beliebiges Datum',
         filterColumn: (label) => `${label} filtern`,
         rowsPerPage: 'Zeilen pro Seite',
+        pageSizeOption: (count) =>
+            `${count} ${count === 1 ? 'Zeile' : 'Zeilen'}`,
         firstPage: 'Erste Seite',
         previousPage: 'Vorherige Seite',
         nextPage: 'Nächste Seite',
@@ -93,6 +95,7 @@ const messages: Record<TableLocale, TableMessages> = {
         anyDate: 'Any date',
         filterColumn: (label) => `Filter ${label}`,
         rowsPerPage: 'Rows per page',
+        pageSizeOption: (count) => `${count} ${count === 1 ? 'row' : 'rows'}`,
         firstPage: 'First page',
         previousPage: 'Previous page',
         nextPage: 'Next page',

@@ -40,6 +40,7 @@ export interface TableMessages extends Partial<TableInteractionMessages> {
     anyDate?: string
     filterColumn: (label: string) => string
     rowsPerPage: string
+    pageSizeOption?: (count: number) => string
     firstPage: string
     previousPage: string
     nextPage: string
