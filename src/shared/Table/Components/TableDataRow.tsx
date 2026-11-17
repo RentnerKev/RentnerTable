@@ -1,4 +1,5 @@
 import type { RowData } from '@tanstack/react-table'
+import { flexRender } from '@tanstack/react-table'
 import { ChevronRight, GripVertical } from 'lucide-react'
 import { TableCheckbox } from './TableCheckbox.tsx'
 import { TableButton } from './TableButton.tsx'
@@ -7,7 +8,6 @@ import { getTableSlotClassName } from '../../../lib/Table/styling.ts'
 import { useTableRowEventsLogic } from '../Hooks/useTableRowEventsLogic.ts'
 
 export function TableDataRow<TData extends RowData>({
-    table,
     view,
     selection,
     renderExpandedRow,
@@ -162,7 +162,10 @@ export function TableDataRow<TData extends RowData>({
                         }
                         className={`px-4 py-3 align-middle group-data-[size=sm]/table:px-3 group-data-[size=sm]/table:py-2 group-data-[size=lg]/table:px-5 group-data-[size=lg]/table:py-4 data-[align=center]:text-center data-[align=right]:text-right ${cell.column.columnDef.meta?.cellClassName ?? ''} ${classNames?.cell ?? ''}`}
                     >
-                        <table.FlexRender cell={cell} />
+                        {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                        )}
                     </td>
                 ))}
             </tr>
