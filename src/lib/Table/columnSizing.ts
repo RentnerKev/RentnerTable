@@ -6,6 +6,19 @@ export interface ResizeColumn {
     resizable: boolean
 }
 
+function getColumnMinimumWidth(column: ResizeColumn): number {
+    return column.resizable ? Math.min(column.min, column.size) : column.size
+}
+
+export function getMinimumColumnWidth(
+    columns: readonly ResizeColumn[],
+): number {
+    return columns.reduce(
+        (sum, column) => sum + getColumnMinimumWidth(column),
+        0,
+    )
+}
+
 /** Fit widths without changing the caller's persisted sizing preferences. */
 export function fitColumnWidths(
     columns: readonly ResizeColumn[],
@@ -43,28 +56,19 @@ export function fitColumnWidths(
         return fitted
     }
 
-    const capacity = fitted.reduce(
-        (sum, column) =>
-            sum +
-            (column.resizable ? Math.max(0, column.size - column.min) : 0),
-        0,
-    )
-    const reduction = Math.min(total - budget, capacity)
-    if (capacity > 0) {
+    const minimum = getMinimumColumnWidth(fitted)
+    if (budget <= minimum) {
+        const scale = budget < minimum ? budget / minimum : 1
+        for (const column of fitted)
+            column.size = getColumnMinimumWidth(column) * scale
+    } else {
+        const remaining = (budget - minimum) / (total - minimum)
         for (const column of fitted) {
-            if (column.resizable) {
-                column.size -=
-                    (Math.max(0, column.size - column.min) / capacity) *
-                    reduction
-            }
+            const lowerBound = getColumnMinimumWidth(column)
+            column.size = lowerBound + (column.size - lowerBound) * remaining
         }
     }
-
     // Responsive fitting is separate from user resizing and keeps persisted minima.
-    const remaining = total - reduction
-    if (remaining > budget) {
-        for (const column of fitted) column.size *= budget / remaining
-    }
     for (const column of fitted) column.min = Math.min(column.min, column.size)
     return fitted
 }

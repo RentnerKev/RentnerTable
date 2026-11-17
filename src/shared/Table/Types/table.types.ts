@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react'
+import type { CalendarMessages } from '@rentnerkev/calendar'
 import type {
     ColumnDef,
     Header,
@@ -17,10 +18,14 @@ import type {
 } from './interaction.types.ts'
 
 export type TableLocale = 'de' | 'en'
+export type TableLocaleOption =
+    TableLocale | { code: TableLocale; messages?: Partial<TableMessages> }
+export type TableColumnWidthMode = 'fit' | 'scroll'
 export type TableSize = 'sm' | 'md' | 'lg'
 
 export interface TableMessages extends Partial<TableInteractionMessages> {
     columnSettings?: Partial<TableColumnSettingsMessages>
+    calendar?: Partial<CalendarMessages>
     empty: string
     loading: string
     sortAscending: string
@@ -77,7 +82,7 @@ export type TableLogicOptions<TData extends RowData> = Pick<
     'data' | 'columns' | 'getRowId' | 'enableSorting'
 > & {
     initialSorting?: SortingState
-    locale?: TableLocale
+    locale?: TableLocaleOption
     messages?: Partial<TableMessages>
     /** Enable horizontal drag handles and keyboard column resizing. Defaults to false. */
     resizableColumns?: boolean
@@ -98,6 +103,8 @@ export type TableProps<TData extends RowData> = Omit<
         emptyState?: ReactNode
         loadingState?: ReactNode
         containerClassName?: string
+        /** Keep resizable columns at their minimum widths in narrow containers. */
+        columnWidthMode?: TableColumnWidthMode
     }
 
 export interface TableHeaderState<TData extends RowData> {

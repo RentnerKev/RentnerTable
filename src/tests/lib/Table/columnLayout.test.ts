@@ -4,6 +4,7 @@ import { createTableColumnHelper } from '../../../lib/Table/table.ts'
 import {
     getColumnLayoutResizeBounds,
     getTableColumnLayout,
+    getTableColumnMinimumWidth,
 } from '../../../lib/Table/columnLayout.ts'
 import { getColumnResizeMaximum } from '../../../lib/Table/columnSizing.ts'
 import type { ResizeColumn } from '../../../lib/Table/columnSizing.ts'
@@ -129,6 +130,28 @@ describe('shared fitted column layouts', () => {
             false,
         ])
         expect(disabled.map((column) => column.size)).toEqual([180, 100])
+    })
+
+    test('derives the scroll floor from visible leaves and keeps fixed sizing preferences', () => {
+        const boundedColumns = helper.columns([
+            helper.accessor('name', { size: 180.3, minSize: 80.1 }),
+            helper.accessor('role', { size: 100, enableResizing: false }),
+        ])
+        const { result } = renderHook(() =>
+            useDataTableLogic({ ...options, columns: boundedColumns }),
+        )
+        expect(getTableColumnMinimumWidth(result.current.table)).toBe(180.1)
+        act(() => result.current.table.setColumnSizing({ role: 130 }))
+        const minimum = getTableColumnMinimumWidth(result.current.table)
+        expect(minimum).toBe(210.1)
+        const layout = getTableColumnLayout(result.current.table, minimum)
+        expect(layout.map((column) => column.size)).toEqual([80.1, 130])
+        expect(getColumnLayoutResizeBounds(layout, minimum, 'name')).toEqual({
+            column: layout[0],
+            maximum: 80.1,
+        })
+        act(() => result.current.table.setColumnVisibility({ name: false }))
+        expect(getTableColumnMinimumWidth(result.current.table)).toBe(130)
     })
 })
 

@@ -41,10 +41,14 @@ export function getTableFilterSummary<TData extends RowData>(
         if (!column) continue
         const config = column.columnDef.meta?.filter
         let value = scalarLabel(filter.value)
-        if (config?.type === 'select')
-            value =
-                config.options.find((option) => option.value === filter.value)
-                    ?.label ?? value
+        if (config?.type === 'select') {
+            if (config.options)
+                value =
+                    config.options.find(
+                        (option) => option.value === filter.value,
+                    )?.label ?? value
+            else if (typeof filter.value === 'string') value = filter.value
+        }
         if (config?.type === 'dateRange') {
             const range = getTableDateRange(filter.value)
             const from = dateLabel(range.from, locale)

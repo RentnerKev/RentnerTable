@@ -20,6 +20,7 @@ import type { TableColumnMeta } from '../../shared/Table/Types/column.types.ts'
 import {
     tableDateRangeFilter,
     tableEqualsFilter,
+    tableIncludesFilter,
     tableTextFilter,
 } from './filters.ts'
 
@@ -43,6 +44,7 @@ function createRentnerTableFeatures() {
         filterFns: {
             text: tableTextFilter,
             equals: tableEqualsFilter,
+            includes: tableIncludesFilter,
             dateRange: tableDateRangeFilter,
         },
         rowPaginationFeature,

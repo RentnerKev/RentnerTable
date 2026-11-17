@@ -127,6 +127,51 @@ test('clamps touch drags and cleans up touch cancellation', async ({
     await expectFitted(page)
 })
 
+test('keeps column minima and utility widths in a scrollable compact viewport', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/?remember=1&column-width-mode=scroll')
+    const table = page.getByRole('table')
+    const viewport = page.locator('[data-rentner-table-container]')
+    await expect
+        .poll(() =>
+            viewport.evaluate(
+                (element) => element.scrollWidth - element.clientWidth,
+            ),
+        )
+        .toBeGreaterThan(0)
+    expect(
+        await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+    ).toBe(true)
+    expect(
+        await table
+            .locator('col')
+            .evaluateAll((elements) =>
+                elements.map((element) => (element as HTMLElement).style.width),
+            ),
+    ).toEqual(['48px', '48px', '40px', ...Array<string>(6).fill('64px')])
+    const handle = page.getByRole('separator', {
+        name: 'Resize Member',
+        exact: true,
+    })
+    await expect(handle).toHaveAttribute('aria-valuemin', '64')
+    await handle.press('Shift+ArrowLeft')
+    await expect(handle).toHaveAttribute('aria-valuenow', '64')
+
+    await page.setViewportSize({ width: 1440, height: 1200 })
+    await expectFitted(page)
+    await expect(handle).not.toHaveAttribute('aria-valuenow', '64')
+    await handle.scrollIntoViewIfNeeded()
+    const before = Number(await handle.getAttribute('aria-valuenow'))
+    await drag(page, handle, 80)
+    expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(
+        before,
+    )
+})
+
 test('keeps preceding column boundaries fixed when resizing a later column in either direction', async ({
     page,
 }) => {

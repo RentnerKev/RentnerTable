@@ -2,6 +2,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { createTableColumnHelper } from '../../../../lib/Table/table.ts'
+import { getTableColumnLayout } from '../../../../lib/Table/columnLayout.ts'
 import { useDataTableLogic } from '../../../../shared/Table/Hooks/useDataTableLogic.ts'
 import { useTableColumnSettingsLogic } from '../../../../shared/Table/Hooks/useTableColumnSettingsLogic.ts'
 import {
@@ -67,7 +68,7 @@ describe('isolated column layout drafts', () => {
         expect(readTableColumnLayout(result.current.table)).toEqual(initial)
     })
 
-    test('reset restores configured sizes in the draft and respects fixed capabilities', () => {
+    test('reset restores configured sizes and automatic filling while preserving fixed widths', async () => {
         const fixed = helper.columns([
             helper.accessor('name', {
                 header: 'Name',
@@ -114,7 +115,57 @@ describe('isolated column layout drafts', () => {
         act(() => result.current.settings.handler.handleWidth('role', '999'))
         expect(result.current.settings.state.rows[0].visible).toBe(true)
         expect(result.current.settings.state.rows[1].width).toBe(220)
+        await act(async () => result.current.settings.handler.handleApply())
+        expect(result.current.table.state.columnSizing).toEqual({ role: 220 })
+        expect(
+            getTableColumnLayout(result.current.table, 600).map(
+                (column) => column.size,
+            ),
+        ).toEqual([380, 220])
     })
+
+    test.each([undefined, 130])(
+        'reset and apply restore initial sizing (configured role width: %s)',
+        async (role) => {
+            const columnSizing: Record<string, number> =
+                role === undefined ? {} : { role }
+            const { result } = renderHook(() => {
+                const logic = useDataTableLogic({
+                    ...base,
+                    tableOptions: { initialState: { columnSizing } },
+                })
+                return {
+                    table: logic.table,
+                    settings: useTableColumnSettingsLogic({
+                        table: logic.table,
+                    }),
+                }
+            })
+            const initialWidths = getTableColumnLayout(
+                result.current.table,
+                600,
+            )
+            act(() => result.current.table.setColumnSizing({ name: 260 }))
+            expect(getTableColumnLayout(result.current.table, 600)).not.toEqual(
+                initialWidths,
+            )
+            act(() => result.current.settings.handler.handleOpen())
+            act(() => result.current.settings.handler.handleReset())
+            expect(
+                result.current.settings.state.rows.map((row) => row.width),
+            ).toEqual([180, role ?? 120])
+            expect(result.current.table.state.columnSizing).toEqual({
+                name: 260,
+            })
+            await act(async () => result.current.settings.handler.handleApply())
+            expect(result.current.table.state.columnSizing).toEqual(
+                columnSizing,
+            )
+            expect(getTableColumnLayout(result.current.table, 600)).toEqual(
+                initialWidths,
+            )
+        },
+    )
 
     test('invalid or empty widths prevent applying and the last visible column stays visible', () => {
         const { result } = renderHook(() => {
@@ -212,7 +263,7 @@ describe('isolated column layout drafts', () => {
         expect(snapshots[0].state).toEqual({
             columnOrder: ['role', 'name'],
             columnVisibility: { role: false, name: true },
-            columnSizing: { role: 120, name: 260 },
+            columnSizing: { name: 260 },
         })
     })
 

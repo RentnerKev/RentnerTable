@@ -1,13 +1,24 @@
+import type { RangeCalendarProps } from '@rentnerkev/calendar'
 import type { ReactNode } from 'react'
+
+export type TableDateRangeOptions = Pick<
+    RangeCalendarProps,
+    'locale' | 'weekStartsOn' | 'showHolidays' | 'fastEdit' | 'backdrop'
+>
 
 export type TableColumnFilter =
     | { type: 'text'; placeholder?: string; maxLength?: number }
     | {
           type: 'select'
           placeholder?: string
-          options: readonly { value: string; label: string }[]
+          options?: readonly { value: string; label: string }[]
+          match?: 'equals' | 'includes'
       }
-    | { type: 'dateRange'; placeholder?: string }
+    | {
+          type: 'dateRange'
+          placeholder?: string
+          calendarOptions?: TableDateRangeOptions
+      }
     | {
           type: 'custom'
           render: (props: {

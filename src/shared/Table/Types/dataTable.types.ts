@@ -7,7 +7,7 @@ import type {
 } from './persistence.types.ts'
 import type { TableStyleOptions, TableButtonSlot } from './styling.types.ts'
 import type { MenuItem } from '@rentnerkev/menu'
-import type { TableDateRange } from './column.types.ts'
+import type { TableDateRange, TableDateRangeOptions } from './column.types.ts'
 import type { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import type {
     TableRowEvents,
@@ -16,8 +16,10 @@ import type {
 import type {
     RentnerTableInstance,
     RentnerTableOptions,
+    TableColumnWidthMode,
     TableLogicResult,
     TableLocale,
+    TableLocaleOption,
     TableMessages,
     TableSize,
 } from './table.types.ts'
@@ -36,6 +38,11 @@ export interface DataTableContext<TData extends RowData> {
     table: RentnerTableInstance<TData>
     selectedRows: readonly TableRow<TData>[]
 }
+
+export type TablePageSizeOption = number | { value: number; label: string }
+
+export type TableSearchValue =
+    string | number | boolean | bigint | Date | null | undefined
 
 export interface DataTableClassNames {
     root?: string
@@ -81,14 +88,24 @@ export type DataTableLogicOptions<TData extends RowData> = Pick<
 > & {
     /** Stable record identity, independent of position, for selection and reordering. */
     getRowId: (row: TData, index: number) => string
-    locale?: TableLocale
+    locale?: TableLocaleOption
     messages?: Partial<TableMessages>
+    /** Localized plural noun used in the default footer range. */
+    rowLabel?: string
     pagination?: boolean
     pageSize?: number
-    pageSizeOptions?: readonly number[]
+    pageSizeOptions?: readonly TablePageSizeOption[]
+    /** Search values from each record, including fields without a column. */
+    getSearchValues?: (row: TData) => readonly TableSearchValue[]
     selectable?: boolean | ((row: TableRow<TData>) => boolean)
     getRowLabel?: (row: TData) => string
     renderExpandedRow?: (row: TableRow<TData>) => ReactNode
+    expansionMode?: 'multiple' | 'single'
+    /** Controls single-row expansion. Use null to close the details row. */
+    expandedRowId?: string | null
+    onExpandedRowIdChange?: (rowId: string | null) => void
+    /** Hide the default expand controls while keeping rendered row details. */
+    showExpandColumn?: boolean
     initialShowFilters?: boolean
     /** Opt in with a unique per-user/table key; defaults to localStorage. */
     persistence?: false | string | TablePersistenceOptions
@@ -118,6 +135,8 @@ export type DataTableProps<TData extends RowData> =
             title?: ReactNode
             description?: ReactNode
             icon?: ReactNode
+            /** Show the row count next to the table title. Defaults to true. */
+            showRowCount?: boolean
             searchable?: boolean
             searchPlaceholder?: string
             /** Defaults to 200; match an application's existing server search contract. */
@@ -135,6 +154,9 @@ export type DataTableProps<TData extends RowData> =
             size?: TableSize
             striped?: boolean
             stickyHeader?: boolean
+            /** Keep resizable columns at their minimum widths in narrow containers. */
+            columnWidthMode?: TableColumnWidthMode
+            dateRangeOptions?: TableDateRangeOptions
             className?: string
             classNames?: DataTableClassNames
             headerDividers?: boolean
@@ -205,6 +227,7 @@ export type DataTableToolbarProps<TData extends RowData> = {
         | 'title'
         | 'description'
         | 'icon'
+        | 'showRowCount'
         | 'searchable'
         | 'searchPlaceholder'
         | 'searchMaxLength'
@@ -252,10 +275,12 @@ export type TableSurfaceProps<TData extends RowData> = Omit<
         onSelectPage?: () => void
         getRowLabel?: (row: TData) => string
         renderExpandedRow?: (row: TableRow<TData>) => ReactNode
+        showExpandColumn?: boolean
         detailsId?: string
         filters?: ReactNode
         detailedStates?: boolean
         resizableColumns?: boolean
+        columnWidthMode?: TableColumnWidthMode
         reorderableRows?: boolean
         onRowReorder?: (activeId: string, overId: string) => void
     }
@@ -280,6 +305,7 @@ export interface TableColumnFilterProps<TData extends RowData> {
     column: TableColumnInstance<TData>
     locale: TableLocale
     messages: TableMessages
+    dateRangeOptions?: TableDateRangeOptions
     disabled?: boolean
 }
 
@@ -289,6 +315,7 @@ export interface DataTableFiltersProps<TData extends RowData> {
         'id' | 'filterColumns' | 'messages'
     >
     locale: TableLocale
+    dateRangeOptions?: TableDateRangeOptions
     disabled?: boolean
     className?: string
 }
@@ -299,6 +326,8 @@ export interface TableDateRangeFilterProps {
     label: string
     placeholder?: string
     locale: TableLocale
+    calendarOptions?: TableDateRangeOptions
+    calendarMessages?: TableMessages['calendar']
     disabled?: boolean
 }
 
@@ -308,7 +337,6 @@ export type TableHeadProps<TData extends RowData> = Pick<
     | 'view'
     | 'selection'
     | 'onSelectPage'
-    | 'renderExpandedRow'
     | 'isLoading'
     | 'filters'
     | 'classNames'
@@ -316,13 +344,14 @@ export type TableHeadProps<TData extends RowData> = Pick<
     | 'resizableColumns'
     | 'reorderableRows'
     | 'headerDividers'
-> & { resizeAvailableWidth?: number }
+> & { resizeAvailableWidth?: number; hasExpandColumn?: boolean }
 export type TableBodyProps<TData extends RowData> = Pick<
     TableSurfaceProps<TData>,
     | 'table'
     | 'view'
     | 'selection'
     | 'renderExpandedRow'
+    | 'showExpandColumn'
     | 'getRowLabel'
     | 'detailsId'
     | 'classNames'

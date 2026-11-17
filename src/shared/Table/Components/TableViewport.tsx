@@ -34,12 +34,14 @@ export function TableViewport<TData extends RowData>({
     onSelectPage,
     getRowLabel,
     renderExpandedRow,
+    showExpandColumn = true,
     detailsId,
     filters,
     detailedStates,
     className = '',
     ref,
     resizableColumns = false,
+    columnWidthMode,
     reorderableRows = false,
     onRowReorder: _onRowReorder,
     onRowClick,
@@ -55,6 +57,7 @@ export function TableViewport<TData extends RowData>({
         headerDividers,
     })
     const classNames = styles.classNames
+    const hasExpandColumn = Boolean(renderExpandedRow) && showExpandColumn
     const {
         state: sizing,
         refs: { table: tableRef },
@@ -63,8 +66,9 @@ export function TableViewport<TData extends RowData>({
         resizableColumns,
         Number(reorderableRows) * 48 +
             Number(Boolean(selection?.selectionEnabled)) * 48 +
-            Number(Boolean(renderExpandedRow)) * 40,
+            Number(hasExpandColumn) * 40,
         ref,
+        columnWidthMode,
     )
     return (
         <div
@@ -97,7 +101,7 @@ export function TableViewport<TData extends RowData>({
                         {selection?.selectionEnabled && (
                             <col style={{ width: 48 }} />
                         )}
-                        {renderExpandedRow && <col style={{ width: 40 }} />}
+                        {hasExpandColumn && <col style={{ width: 40 }} />}
                         {sizing.widths.map((column) => (
                             <col
                                 key={column.id}
@@ -111,7 +115,7 @@ export function TableViewport<TData extends RowData>({
                     view={view}
                     selection={selection}
                     onSelectPage={onSelectPage}
-                    renderExpandedRow={renderExpandedRow}
+                    hasExpandColumn={hasExpandColumn}
                     isLoading={isLoading}
                     filters={filters}
                     classNames={classNames}
@@ -143,6 +147,7 @@ export function TableViewport<TData extends RowData>({
                         view={view}
                         selection={selection}
                         renderExpandedRow={renderExpandedRow}
+                        showExpandColumn={hasExpandColumn}
                         getRowLabel={getRowLabel}
                         detailsId={detailsId}
                         classNames={classNames}

@@ -58,6 +58,42 @@ function memoryStorage(initial?: TableStateSnapshot) {
 }
 
 describe('table state persistence integration', () => {
+    test('restores a legacy expansion map to the same single row every time', async () => {
+        const legacy = snapshot({ expanded: { 'row-1': true, 'row-3': true } })
+        const { storage, records } = memoryStorage(legacy)
+        const stateRef = createRef<TableStateController>()
+        const { result } = renderHook(() =>
+            useDataTableLogic({
+                ...base,
+                expansionMode: 'single',
+                renderExpandedRow: () => null,
+                tableOptions: { initialState: { expanded: { 'row-1': true } } },
+                persistence: {
+                    key: 'preferences',
+                    storage,
+                    fields: ['expanded'],
+                    debounceMs: 60_000,
+                },
+                stateRef,
+            }),
+        )
+        const controller = stateRef.current!
+        const single = snapshot({ expanded: { 'row-1': true } })
+        await waitFor(() =>
+            expect(result.current.state.persistenceStatus).toBe('ready'),
+        )
+        expect(controller.getState()).toEqual(single)
+        await act(async () => controller.flush())
+        expect(records.get('preferences')).toEqual(single)
+
+        act(() => result.current.table.getRow('row-3').toggleExpanded())
+        expect(controller.getState().state.expanded).toEqual({ 'row-3': true })
+        act(() => expect(controller.restoreState(legacy)).toBe(true))
+        expect(controller.getState()).toEqual(single)
+        act(() => expect(controller.restoreState(legacy)).toBe(true))
+        expect(controller.getState()).toEqual(single)
+    })
+
     test('restores column order, ignores removed columns and appends new columns', async () => {
         const { storage, records } = memoryStorage(
             snapshot({ columnOrder: ['removed', 'role'] }),

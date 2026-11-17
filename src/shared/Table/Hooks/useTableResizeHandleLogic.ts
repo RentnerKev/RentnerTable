@@ -6,10 +6,7 @@ import {
     getColumnLayoutResizeBounds,
     getTableColumnLayout,
 } from '../../../lib/Table/columnLayout.ts'
-import {
-    fitColumnWidths,
-    resizeColumnWidths,
-} from '../../../lib/Table/columnSizing.ts'
+import { resizeColumnWidths } from '../../../lib/Table/columnSizing.ts'
 import type {
     TableColumnResizeHandleProps,
     TableColumnResizeHandleLogicResult,
@@ -50,6 +47,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
             column.id,
             requested,
         )
+        if (next[column.id] === size) return
         table.setColumnSizing((current) => ({ ...current, ...next }))
     }
     const handleStart = (
@@ -79,11 +77,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 .direction === 'rtl'
                 ? -1
                 : 1
-        const startColumns = fitColumnWidths(
-            columns,
-            availableWidthRef.current,
-            Object.keys(table.state.columnSizing).length === 0,
-        )
+        const startColumns = columns
         const startSize =
             startColumns.find((item) => item.id === column.id)?.size ?? size
         const contextWindow = contextDocument.defaultView
@@ -92,6 +86,7 @@ export function useTableResizeHandleLogic<TData extends RowData>({
         let frame: number | null = null
         let lastOffset: number | undefined
         let lastWidth: number | undefined
+        let hasResized = false
         const update = (nextX: number, end: boolean) => {
             latestX = nextX
             const width = availableWidthRef.current
@@ -121,10 +116,14 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                     deltaPercentage: startSize > 0 ? offset / startSize : 0,
                 }))
             if (
-                (changed && mode === 'onChange') ||
-                (end && mode !== 'onChange')
-            )
+                (mode === 'onChange' &&
+                    changed &&
+                    (offset !== 0 || hasResized)) ||
+                (end && mode !== 'onChange' && offset !== 0)
+            ) {
+                hasResized = true
                 table.setColumnSizing((current) => ({ ...current, ...next }))
+            }
         }
         // Input devices can emit several moves before a paint. Keep the latest
         // position and commit once per frame without measuring layout on this path.

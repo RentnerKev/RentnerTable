@@ -4,10 +4,51 @@ import {
     tableEqualsFilter,
     tableTextFilter,
 } from '../../../index.ts'
+import { createTableSearchFilter } from '../../../lib/Table/filters.ts'
 
 const row = (value: unknown) => ({ getValue: () => value })
 
 describe('portable table filters', () => {
+    test('searches getter values with the same normalization as scalar text filters', () => {
+        const original = {
+            displayed: 'Ignored',
+            hidden: [
+                null,
+                undefined,
+                'Hidden field',
+                0,
+                false,
+                7n,
+                new Date('2026-11-15T12:00:00.000Z'),
+                new Date('invalid'),
+            ] as const,
+        }
+        const filter = createTableSearchFilter(
+            (record: typeof original) => record.hidden,
+        )
+        for (const query of [' HIDDEN ', '0', 'false', '7', '2026-11-15']) {
+            expect(filter({ original }, 'displayed', query)).toBe(true)
+            expect(
+                filter(
+                    { original },
+                    'displayed',
+                    filter.resolveFilterValue(query),
+                ),
+            ).toBe(true)
+        }
+        for (const query of [
+            'Ignored',
+            'null',
+            'undefined',
+            'invalid',
+            'field 0',
+        ])
+            expect(filter({ original }, 'displayed', query)).toBe(false)
+        expect(createTableSearchFilter(() => [])({ original }, 'id', ' ')).toBe(
+            true,
+        )
+    })
+
     test('trims and normalizes search while preserving scalar zero and false values', () => {
         expect(tableTextFilter(row('Kevin Sträßler'), 'name', ' KEVIN ')).toBe(
             true,

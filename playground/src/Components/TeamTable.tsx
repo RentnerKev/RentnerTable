@@ -12,6 +12,7 @@ export function TeamTable({
     isLoading,
     striped,
     resizableColumns,
+    columnWidthMode,
     columnSettings,
     reorderableRows,
     rememberSettings,
@@ -53,6 +54,7 @@ export function TeamTable({
                     isLoading={isLoading}
                     striped={striped}
                     resizableColumns={resizableColumns}
+                    columnWidthMode={columnWidthMode}
                     columnSettings={columnSettings}
                     reorderableRows={reorderableRows}
                     persistence={

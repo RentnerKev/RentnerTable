@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTable } from '@tanstack/react-table'
-import type { RowData } from '@tanstack/react-table'
+import type {
+    CellData,
+    Column,
+    RowData,
+    TableFeatures,
+} from '@tanstack/react-table'
 import type { MenuItem } from '@rentnerkev/menu'
 import { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import {
@@ -10,16 +15,56 @@ import {
     getTableView,
     prepareTableColumns,
 } from '../../../lib/Table/presentation.ts'
-import { resolveTableMessages } from '../../../lib/Messages/tableMessages.ts'
+import {
+    getTableLocale,
+    resolveTableMessages,
+} from '../../../lib/Messages/tableMessages.ts'
 import { getTableFilterSummary } from '../../../lib/Table/filterSummary.ts'
+import { createTableSearchFilter } from '../../../lib/Table/filters.ts'
 import type {
     DataTableLogicOptions,
     DataTableLogicResult,
+    TablePageSizeOption,
 } from '../Types/dataTable.types.ts'
 import { useTableRowOrder } from './useTableRowOrder.ts'
 import { useTableStatePersistence } from './useTableStatePersistence.ts'
+import { useSingleRowExpansion } from './useSingleRowExpansion.ts'
 
 const defaultPageSizes = [10, 25, 50, 100] as const
+
+function isRowSearchColumn<
+    TFeatures extends TableFeatures,
+    TData extends RowData,
+    TValue extends CellData,
+>(column: Column<TFeatures, TData, TValue>) {
+    // A record-level predicate only needs one eligible accessor as its entry point.
+    return (
+        column.id ===
+        column.table
+            .getAllLeafColumns()
+            .find(
+                (item) =>
+                    item.accessorFn &&
+                    (!('enableGlobalFilter' in item.columnDef) ||
+                        item.columnDef.enableGlobalFilter !== false),
+            )?.id
+    )
+}
+
+function getPageSizes(
+    options: readonly TablePageSizeOption[],
+    currentSize: number,
+) {
+    const labels = new Map([[currentSize, String(currentSize)]])
+    for (const option of options) {
+        if (typeof option !== 'number') labels.set(option.value, option.label)
+        else if (!labels.has(option)) labels.set(option, String(option))
+    }
+    const sizes = [...labels].toSorted(([a], [b]) => a - b)
+    if (sizes.some(([size]) => !Number.isInteger(size) || size < 1))
+        throw new Error('Table page sizes must be positive integers')
+    return sizes.map(([value, label]) => ({ value, label }))
+}
 
 export function useDataTableLogic<TData extends RowData>({
     data,
@@ -27,11 +72,17 @@ export function useDataTableLogic<TData extends RowData>({
     getRowId,
     locale = 'en',
     messages: overrides,
+    rowLabel,
     pagination = true,
     pageSize = 10,
     pageSizeOptions = defaultPageSizes,
+    getSearchValues,
     selectable = false,
     renderExpandedRow,
+    expansionMode,
+    expandedRowId,
+    onExpandedRowIdChange,
+    showExpandColumn = true,
     initialShowFilters = false,
     tableOptions,
     portalContainer,
@@ -53,8 +104,8 @@ export function useDataTableLogic<TData extends RowData>({
     const [showFilters, setShowFilters] = useState(initialShowFilters)
     const [root, setRoot] = useState<HTMLElement | null>(null)
     const messages = useMemo(
-        () => resolveTableMessages(locale, overrides),
-        [locale, overrides],
+        () => resolveTableMessages(locale, overrides, rowLabel),
+        [locale, overrides, rowLabel],
     )
     const preparedColumns = useMemo(
         () => prepareTableColumns(columns),
@@ -62,10 +113,26 @@ export function useDataTableLogic<TData extends RowData>({
     )
     const manualPagination =
         !pagination || tableOptions?.manualPagination === true
+    const rowSearchFilter = useMemo(
+        () => getSearchValues && createTableSearchFilter(getSearchValues),
+        [getSearchValues],
+    )
+    // TanStack keys its filtered model on data and query state, not filter identity.
+    const tableData = useMemo(
+        () => (rowSearchFilter ? [...ordered.state.data] : ordered.state.data),
+        [ordered.state.data, rowSearchFilter],
+    )
+    const expansion = useSingleRowExpansion({
+        expansionMode,
+        expandedRowId,
+        onExpandedRowIdChange,
+        tableOptions,
+    })
     const table = useTable({
-        globalFilterFn: 'text',
+        globalFilterFn: rowSearchFilter ?? 'text',
+        ...(rowSearchFilter && { getColumnCanGlobalFilter: isRowSearchColumn }),
         autoResetPageIndex: false,
-        autoResetExpanded: reorderableRows ? false : undefined,
+        autoResetExpanded: reorderableRows || expansion ? false : undefined,
         columnResizeMode: 'onChange',
         enableColumnResizing: resizableColumns,
         ...tableOptions,
@@ -73,12 +140,13 @@ export function useDataTableLogic<TData extends RowData>({
             ? { minSize: 64, maxSize: 2000, ...tableOptions?.defaultColumn }
             : tableOptions?.defaultColumn,
         features: rentnerTableFeatures,
-        data: ordered.state.data,
+        data: tableData,
         columns: preparedColumns,
         getRowId,
         enableRowSelection: selectable,
         getRowCanExpand:
             tableOptions?.getRowCanExpand ?? (() => Boolean(renderExpandedRow)),
+        ...expansion,
         manualPagination,
         initialState: {
             ...tableOptions?.initialState,
@@ -200,19 +268,9 @@ export function useDataTableLogic<TData extends RowData>({
         [allColumns, visibleColumns, canHideColumns],
     )
     const pageSizes = useMemo(
-        () =>
-            [...new Set([...pageSizeOptions, currentPageSize])]
-                .toSorted((left, right) => left - right)
-                .map((value) => ({ value, label: String(value) })),
+        () => getPageSizes(pageSizeOptions, currentPageSize),
         [pageSizeOptions, currentPageSize],
     )
-
-    if (
-        !Number.isInteger(currentPageSize) ||
-        currentPageSize < 1 ||
-        pageSizeOptions.some((size) => !Number.isInteger(size) || size < 1)
-    )
-        throw new Error('Table page sizes must be positive integers')
     const search =
         typeof table.state.globalFilter === 'string'
             ? table.state.globalFilter
@@ -225,7 +283,7 @@ export function useDataTableLogic<TData extends RowData>({
         table,
         messages,
         Number(selectionEnabled) +
-            Number(Boolean(renderExpandedRow)) +
+            Number(Boolean(renderExpandedRow) && showExpandColumn) +
             Number(reorderableRows),
     )
     const totalRows = tableOptions?.manualPagination
@@ -261,7 +319,7 @@ export function useDataTableLogic<TData extends RowData>({
             filterSummary: getTableFilterSummary(
                 table,
                 search,
-                locale,
+                getTableLocale(locale),
                 messages,
             ),
             persistenceStatus: preferences.state.status,

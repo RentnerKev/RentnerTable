@@ -11,7 +11,7 @@ export function TableHead<TData extends RowData>({
     view,
     selection,
     onSelectPage,
-    renderExpandedRow,
+    hasExpandColumn,
     isLoading,
     filters,
     classNames,
@@ -59,7 +59,7 @@ export function TableHead<TData extends RowData>({
                             />
                         </th>
                     )}
-                    {index === 0 && renderExpandedRow && (
+                    {index === 0 && hasExpandColumn && (
                         <th
                             scope="col"
                             rowSpan={view.headerGroups.length}

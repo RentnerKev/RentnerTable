@@ -67,6 +67,47 @@ function rowNames() {
 }
 
 describe('reusable data table', () => {
+    test('labels page sizes and the footer without duplicating the total in the title', () => {
+        render(
+            <DataTable
+                data={data}
+                columns={columns}
+                getRowId={getRowId}
+                pageSize={5}
+                pageSizeOptions={[5, { value: 5, label: '5 members' }, 10, 5]}
+                rowLabel="members"
+                showRowCount={false}
+            />,
+        )
+        expect(rowNames()).toHaveLength(5)
+        expect(screen.getByText('1–5 of 23 members')).toBeDefined()
+        expect(
+            screen.getByRole('combobox', { name: 'Rows per page' }).textContent,
+        ).toContain('5 members')
+        expect(screen.queryByText('23', { exact: true })).toBeNull()
+    })
+
+    test('searches fields without columns and updates when the getter changes', async () => {
+        const table = { data, columns, getRowId }
+        const { rerender } = render(
+            <DataTable {...table} getSearchValues={(person) => [person.id]} />,
+        )
+        fireEvent.change(
+            screen.getByRole('textbox', { name: 'Search table' }),
+            { target: { value: ' ID-9 ' } },
+        )
+        await waitFor(() => expect(rowNames()).toHaveLength(1))
+        expect(screen.getByText('Member 09')).toBeDefined()
+
+        rerender(
+            <DataTable
+                {...table}
+                getSearchValues={(person) => [person.joined]}
+            />,
+        )
+        await waitFor(() => expect(rowNames()).toHaveLength(0))
+    })
+
     test('paginates, reports the filtered row range and preserves result counts', async () => {
         render(
             <DataTable

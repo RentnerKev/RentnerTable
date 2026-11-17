@@ -28,6 +28,7 @@ export type {
     TableColumnMeta,
     TableColumnFilter,
     TableDateRange,
+    TableDateRangeOptions,
 } from './shared/Table/Types/column.types.ts'
 export type {
     DataTableProps,
@@ -37,6 +38,8 @@ export type {
     DataTableClassNames,
     TableRow,
     TableColumnInstance,
+    TablePageSizeOption,
+    TableSearchValue,
     TableSurfaceProps,
     DataTableToolbarProps,
     DataTablePaginationProps,
@@ -62,7 +65,9 @@ export type {
 } from './shared/Table/Types/persistence.types.ts'
 export type {
     TableColumn,
+    TableColumnWidthMode,
     TableLocale,
+    TableLocaleOption,
     TableLogicOptions,
     TableLogicResult,
     TableMessages,

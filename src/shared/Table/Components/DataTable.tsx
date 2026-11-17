@@ -1,6 +1,7 @@
 'use client'
 
 import type { RowData } from '@tanstack/react-table'
+import { getTableLocale } from '../../../lib/Messages/tableMessages.ts'
 import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { useDataTableLogic } from '../Hooks/useDataTableLogic.ts'
 import { DataTableToolbar } from './DataTableToolbar.tsx'
@@ -17,6 +18,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
         handler,
         refs: { root },
     } = useDataTableLogic(props)
+    const locale = getTableLocale(props.locale)
     const { state: styles } = useTableStyles(props)
     return (
         <TableProvider
@@ -40,7 +42,8 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                 {props.columnFilters !== false && state.showFilters && (
                     <DataTableFilters
                         state={state}
-                        locale={props.locale ?? 'en'}
+                        locale={locale}
+                        dateRangeOptions={props.dateRangeOptions}
                         disabled={props.isLoading}
                         className={styles.classNames.filters}
                     />
@@ -53,6 +56,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     embedded
                     detailedStates
                     resizableColumns={props.resizableColumns}
+                    columnWidthMode={props.columnWidthMode}
                     reorderableRows={props.reorderableRows}
                     onRowReorder={handler.handleRowReorder}
                     onRowClick={props.onRowClick}
@@ -71,6 +75,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                     onSelectPage={handler.handleSelectPage}
                     getRowLabel={props.getRowLabel}
                     renderExpandedRow={props.renderExpandedRow}
+                    showExpandColumn={props.showExpandColumn}
                     rowClassName={props.rowClassName}
                     detailsId={`${state.id}-details`}
                     isLoading={props.isLoading}
@@ -86,7 +91,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
                 <DataTablePagination
                     state={state}
                     handler={handler}
-                    locale={props.locale ?? 'en'}
+                    locale={locale}
                     pagination={props.pagination !== false}
                     disabled={props.isLoading}
                     className={styles.classNames.footer}

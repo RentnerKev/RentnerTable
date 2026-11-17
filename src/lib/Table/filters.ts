@@ -22,22 +22,24 @@ function resolveTextFilterValue(value: unknown) {
     }
 }
 
+function getTextQuery(value: unknown): string {
+    return typeof value === 'object' &&
+        value !== null &&
+        resolvedText in value &&
+        typeof value[resolvedText] === 'string'
+        ? value[resolvedText]
+        : resolveTextFilterValue(value)[resolvedText]
+}
+
 export const tableTextFilter = /* @__PURE__ */ Object.assign(
     (
         row: { getValue: (id: string) => unknown },
         columnId: string,
         value: unknown,
     ) => {
-        const query =
-            typeof value === 'object' &&
-            value !== null &&
-            resolvedText in value &&
-            typeof value[resolvedText] === 'string'
-                ? value[resolvedText]
-                : resolveTextFilterValue(value)[resolvedText]
         return searchableValue(row.getValue(columnId))
             .toLocaleLowerCase()
-            .includes(query)
+            .includes(getTextQuery(value))
     },
     {
         autoRemove: (value: unknown) => searchableValue(value).trim() === '',
@@ -46,6 +48,27 @@ export const tableTextFilter = /* @__PURE__ */ Object.assign(
     },
 )
 
+export function createTableSearchFilter<TData>(
+    getSearchValues: (
+        row: TData,
+    ) => readonly (
+        string | number | boolean | bigint | Date | null | undefined
+    )[],
+) {
+    return Object.assign(
+        (row: { original: TData }, _columnId: string, value: unknown) => {
+            const query = getTextQuery(value)
+            return (
+                query === '' ||
+                getSearchValues(row.original).some((item) =>
+                    searchableValue(item).toLocaleLowerCase().includes(query),
+                )
+            )
+        },
+        { resolveFilterValue: tableTextFilter.resolveFilterValue },
+    )
+}
+
 export const tableEqualsFilter = /* @__PURE__ */ Object.assign(
     (
         row: { getValue: (id: string) => unknown },
@@ -53,6 +76,22 @@ export const tableEqualsFilter = /* @__PURE__ */ Object.assign(
         value: unknown,
     ) => searchableValue(row.getValue(columnId)) === searchableValue(value),
     { autoRemove: (value: unknown) => value == null || value === '' },
+)
+
+export const tableIncludesFilter = /* @__PURE__ */ Object.assign(
+    (
+        row: { getValue: (id: string) => unknown },
+        columnId: string,
+        value: unknown,
+    ) => {
+        const values = row.getValue(columnId)
+        return (
+            typeof value === 'string' &&
+            Array.isArray(values) &&
+            values.includes(value)
+        )
+    },
+    { autoRemove: tableEqualsFilter.autoRemove },
 )
 
 export function getTableDateRange(value: unknown): TableDateRange {
