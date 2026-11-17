@@ -89,7 +89,7 @@ test('restores filters, sorting, column widths, visibility and page size after r
     await page
         .getByRole('combobox', { name: 'Rows per page', exact: true })
         .click()
-    await page.getByRole('option', { name: '25', exact: true }).click()
+    await page.getByRole('option', { name: '25 rows', exact: true }).click()
     await page.reload()
     await expect(
         page.getByRole('button', { name: 'Remember settings', exact: true }),
@@ -104,7 +104,7 @@ test('restores filters, sorting, column widths, visibility and page size after r
     ).toHaveCount(0)
     await expect(
         page.getByRole('combobox', { name: 'Rows per page', exact: true }),
-    ).toContainText('25')
+    ).toContainText('25 rows')
 
     // A suspended debounce cannot save this edit; navigating must flush it.
     const clockStart = new Date('2026-01-01T12:00:00Z')

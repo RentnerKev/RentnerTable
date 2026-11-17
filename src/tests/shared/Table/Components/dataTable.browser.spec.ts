@@ -111,7 +111,7 @@ test('changes page sizes through the shared select and bounds the last page', as
     await page
         .getByRole('combobox', { name: 'Rows per page', exact: true })
         .click()
-    await page.getByRole('option', { name: '25', exact: true }).click()
+    await page.getByRole('option', { name: '25 rows', exact: true }).click()
     await expect(
         page.getByRole('table').locator('tbody tr[data-row-id]'),
     ).toHaveCount(25)
