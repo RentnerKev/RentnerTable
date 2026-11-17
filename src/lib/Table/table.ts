@@ -8,13 +8,12 @@ import {
     createExpandedRowModel,
     createFilteredRowModel,
     createPaginatedRowModel,
-    createSortedRowModel,
+    sortFns,
     globalFilteringFeature,
     rowExpandingFeature,
     rowPaginationFeature,
     rowSelectionFeature,
     rowSortingFeature,
-    sortFns,
     tableFeatures,
 } from '@tanstack/react-table'
 import type { RowData } from '@tanstack/react-table'
@@ -24,6 +23,8 @@ import {
     tableEqualsFilter,
     tableTextFilter,
 } from './filters.ts'
+
+import { createMaterializedSortedRowModel } from './sortedRowModel.ts'
 
 const columnMeta: TableColumnMeta = {}
 
@@ -47,7 +48,7 @@ export const rentnerTableFeatures = tableFeatures({
     rowExpandingFeature,
     expandedRowModel: createExpandedRowModel(),
     rowSortingFeature,
-    sortedRowModel: createSortedRowModel(),
+    sortedRowModel: createMaterializedSortedRowModel(),
     sortFns,
 })
 

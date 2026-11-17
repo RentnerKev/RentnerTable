@@ -56,25 +56,31 @@ export function useTableStatePersistence<TData extends RowData>(
         latest.current = { bindings, options, scope }
     })
 
-    const getState = useCallback((): TableStateSnapshot => {
+    const readState = useCallback((): Record<TableStateField, unknown> => {
         const state = latest.current.bindings.table.atoms
-        return createTableStateSnapshot(
-            {
-                sorting: state.sorting.get(),
-                columnFilters: state.columnFilters.get(),
-                globalFilter: state.globalFilter.get(),
-                columnVisibility: state.columnVisibility.get(),
-                columnSizing: state.columnSizing.get(),
-                columnOrder: state.columnOrder.get(),
-                pagination: state.pagination.get(),
-                rowSelection: state.rowSelection.get(),
-                expanded: state.expanded.get(),
-                showFilters: latest.current.bindings.showFilters,
-                rowOrder: latest.current.bindings.rowOrder,
-            },
-            latest.current.options?.fields,
-        )
+        return {
+            sorting: state.sorting.get(),
+            columnFilters: state.columnFilters.get(),
+            globalFilter: state.globalFilter.get(),
+            columnVisibility: state.columnVisibility.get(),
+            columnSizing: state.columnSizing.get(),
+            columnOrder: state.columnOrder.get(),
+            pagination: state.pagination.get(),
+            rowSelection: state.rowSelection.get(),
+            expanded: state.expanded.get(),
+            showFilters: latest.current.bindings.showFilters,
+            rowOrder: latest.current.bindings.rowOrder,
+        }
     }, [])
+
+    const getState = useCallback(
+        (): TableStateSnapshot =>
+            createTableStateSnapshot(
+                readState(),
+                latest.current.options?.fields,
+            ),
+        [readState],
+    )
 
     const report = useCallback(
         (
@@ -167,7 +173,20 @@ export function useTableStatePersistence<TData extends RowData>(
                 session.initializing
             )
                 return
-            const next = getState()
+            const source = readState()
+            const selected =
+                latest.current.options?.fields ??
+                (Object.keys(source) as TableStateField[])
+            // TanStack state slices are immutable. Option notifications can reuse
+            // every persisted source, including large selection/order records.
+            if (
+                selected.every((field) =>
+                    Object.is(source[field], session.observed[field]),
+                )
+            )
+                return
+            session.observed = source
+            const next = createTableStateSnapshot(source, selected)
             if (JSON.stringify(next) === JSON.stringify(session.baseline))
                 return
             session.cleared = undefined
@@ -181,7 +200,7 @@ export function useTableStatePersistence<TData extends RowData>(
             session.baseline = next
             schedule(session, next)
         },
-        [getState, schedule, restoring],
+        [readState, schedule, restoring],
     )
 
     const apply = useCallback(
@@ -211,6 +230,7 @@ export function useTableStatePersistence<TData extends RowData>(
             session.initializing = false
             session.ready = true
             session.baseline = getState()
+            session.observed = readState()
             session.finishRestore?.()
             session.finishRestore = undefined
             setError(null)
@@ -218,7 +238,7 @@ export function useTableStatePersistence<TData extends RowData>(
             schedule(session, session.baseline)
         }
         restoring.current = false
-    }, [scope, getState, schedule, revision])
+    }, [scope, getState, readState, schedule, revision])
 
     const load = useCallback(
         async (session: TablePersistenceSession) => {
@@ -231,6 +251,7 @@ export function useTableStatePersistence<TData extends RowData>(
             session.initializing = false
             session.dirty.clear()
             session.baseline = getState()
+            session.observed = readState()
             session.pending = undefined
             if (session.timer !== undefined) clearTimeout(session.timer)
             if (session.active) {
@@ -290,7 +311,7 @@ export function useTableStatePersistence<TData extends RowData>(
                 throw cause
             }
         },
-        [getState, observe, apply, report, restoring, getAdapter],
+        [getState, readState, observe, apply, report, restoring, getAdapter],
     )
 
     useEffect(() => {
@@ -313,6 +334,7 @@ export function useTableStatePersistence<TData extends RowData>(
             generation: 0,
             loading: Promise.resolve(),
             baseline: getState(),
+            observed: readState(),
             dirty: new Set(),
         }
         sessionRef.current = session
@@ -326,17 +348,22 @@ export function useTableStatePersistence<TData extends RowData>(
                 observe(session)
             })
         }
-        const subscriptions = [
-            atoms.sorting,
-            atoms.columnFilters,
-            atoms.globalFilter,
-            atoms.columnVisibility,
-            atoms.columnSizing,
-            atoms.columnOrder,
-            atoms.pagination,
-            atoms.rowSelection,
-            atoms.expanded,
-        ].map((atom) => atom.subscribe(changed))
+        const selected = new Set(configuration.fields)
+        const subscriptions = (
+            [
+                ['sorting', atoms.sorting],
+                ['columnFilters', atoms.columnFilters],
+                ['globalFilter', atoms.globalFilter],
+                ['columnVisibility', atoms.columnVisibility],
+                ['columnSizing', atoms.columnSizing],
+                ['columnOrder', atoms.columnOrder],
+                ['pagination', atoms.pagination],
+                ['rowSelection', atoms.rowSelection],
+                ['expanded', atoms.expanded],
+            ] as const
+        )
+            .filter(([field]) => !configuration.fields || selected.has(field))
+            .map(([, atom]) => atom.subscribe(changed))
         session.loading = load(session)
         session.loading.catch(() => {})
         const pageHide = () => {
@@ -372,15 +399,14 @@ export function useTableStatePersistence<TData extends RowData>(
                 enqueue(session, session.pending).catch(() => {})
             if (sessionRef.current === session) sessionRef.current = null
         }
-    }, [scope, atoms, getState, load, observe, enqueue, report])
+    }, [scope, atoms, getState, readState, load, observe, enqueue, report])
 
     useEffect(() => {
         const session = sessionRef.current
         if (
             session &&
-            (showFilters !== session.baseline.state.showFilters ||
-                JSON.stringify(rowOrder) !==
-                    JSON.stringify(session.baseline.state.rowOrder))
+            (!Object.is(showFilters, session.observed.showFilters) ||
+                !Object.is(rowOrder, session.observed.rowOrder))
         )
             observe(session)
     }, [showFilters, rowOrder, observe])
@@ -436,6 +462,7 @@ export function useTableStatePersistence<TData extends RowData>(
         if (session.timer !== undefined) clearTimeout(session.timer)
         session.pending = undefined
         session.baseline = getState()
+        session.observed = readState()
         session.lastQueued = JSON.stringify(session.baseline)
         session.cleared = session.lastQueued
         const job = writes.current.then(() => {
@@ -455,7 +482,7 @@ export function useTableStatePersistence<TData extends RowData>(
             report(session, cause, 'remove')
             throw cause
         }
-    }, [getState, report, getAdapter])
+    }, [getState, readState, report, getAdapter])
 
     const reload = useCallback(() => {
         const session = sessionRef.current

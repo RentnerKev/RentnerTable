@@ -49,3 +49,24 @@ describe('table row ordering', () => {
         expect(applyTableRowOrder(records, undefined, identify)).toBe(records)
     })
 })
+
+test('row moves keep index-derived identity and use the first occurrence of repeated IDs', () => {
+    const values = Object.freeze(['same', 'second', 'same', 'last'])
+    const indexed = moveTableRow(
+        values,
+        (_value, index) => String(index),
+        '1',
+        '3',
+    )
+    expect(indexed?.data).toEqual(['same', 'same', 'last', 'second'])
+    expect(indexed?.change).toEqual({
+        activeId: '1',
+        overId: '3',
+        fromIndex: 1,
+        toIndex: 3,
+    })
+    const repeated = moveTableRow(values, (value) => value, 'same', 'last')
+    expect(repeated?.data).toEqual(['second', 'same', 'last', 'same'])
+    expect(repeated?.change.fromIndex).toBe(0)
+    expect(values).toEqual(['same', 'second', 'same', 'last'])
+})
