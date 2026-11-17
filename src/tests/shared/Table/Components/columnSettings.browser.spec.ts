@@ -182,7 +182,21 @@ test('reset and apply restore the first-load width and keep it after reload', as
     const table = page.getByRole('table')
     await expect(table).toHaveCSS('table-layout', 'fixed')
     const width = () =>
-        table.evaluate((element) => element.getBoundingClientRect().width)
+        table.evaluate((element) =>
+            Math.round(element.getBoundingClientRect().width),
+        )
+    await expect
+        .poll(() =>
+            table.evaluate((element) => {
+                const visibleWidth = element.parentElement?.clientWidth ?? 0
+                return (
+                    visibleWidth > 0 &&
+                    Math.round(element.getBoundingClientRect().width) ===
+                        visibleWidth
+                )
+            }),
+        )
+        .toBe(true)
     const firstWidth = await width()
     const trigger = page.getByRole('button', {
         name: 'Column settings',
