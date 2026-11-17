@@ -44,8 +44,9 @@ export function getTableFilterSummary<TData extends RowData>(
         if (config?.type === 'select') {
             if (config.options)
                 value =
-                    config.options.find((option) => option.value === filter.value)
-                        ?.label ?? value
+                    config.options.find(
+                        (option) => option.value === filter.value,
+                    )?.label ?? value
             else if (typeof filter.value === 'string') value = filter.value
         }
         if (config?.type === 'dateRange') {

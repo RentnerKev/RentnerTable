@@ -10,8 +10,13 @@ function getColumnMinimumWidth(column: ResizeColumn): number {
     return column.resizable ? Math.min(column.min, column.size) : column.size
 }
 
-export function getMinimumColumnWidth(columns: readonly ResizeColumn[]): number {
-    return columns.reduce((sum, column) => sum + getColumnMinimumWidth(column), 0)
+export function getMinimumColumnWidth(
+    columns: readonly ResizeColumn[],
+): number {
+    return columns.reduce(
+        (sum, column) => sum + getColumnMinimumWidth(column),
+        0,
+    )
 }
 
 /** Fit widths without changing the caller's persisted sizing preferences. */

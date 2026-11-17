@@ -29,10 +29,20 @@ describe('portable table filters', () => {
         for (const query of [' HIDDEN ', '0', 'false', '7', '2026-11-15']) {
             expect(filter({ original }, 'displayed', query)).toBe(true)
             expect(
-                filter({ original }, 'displayed', filter.resolveFilterValue(query)),
+                filter(
+                    { original },
+                    'displayed',
+                    filter.resolveFilterValue(query),
+                ),
             ).toBe(true)
         }
-        for (const query of ['Ignored', 'null', 'undefined', 'invalid', 'field 0'])
+        for (const query of [
+            'Ignored',
+            'null',
+            'undefined',
+            'invalid',
+            'field 0',
+        ])
             expect(filter({ original }, 'displayed', query)).toBe(false)
         expect(createTableSearchFilter(() => [])({ original }, 'id', ' ')).toBe(
             true,

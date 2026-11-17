@@ -116,7 +116,9 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                     deltaPercentage: startSize > 0 ? offset / startSize : 0,
                 }))
             if (
-                (mode === 'onChange' && changed && (offset !== 0 || hasResized)) ||
+                (mode === 'onChange' &&
+                    changed &&
+                    (offset !== 0 || hasResized)) ||
                 (end && mode !== 'onChange' && offset !== 0)
             ) {
                 hasResized = true

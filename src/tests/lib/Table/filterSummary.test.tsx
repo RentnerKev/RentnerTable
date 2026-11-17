@@ -127,7 +127,9 @@ describe('filter context', () => {
             selectHelper.accessor('tags', {
                 header: 'Tags',
                 filterFn: (row) => row.original.id === '2',
-                meta: { filter: { type: 'select', match: 'includes', options } },
+                meta: {
+                    filter: { type: 'select', match: 'includes', options },
+                },
             }),
         ])
         const { result } = renderHook(() =>

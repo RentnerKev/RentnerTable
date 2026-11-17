@@ -97,10 +97,13 @@ function getConfiguredColumnLayout<TData extends RowData>(
         // Fixed widths still constrain the budget when the resizable leaves are automatic.
         fill:
             Object.keys(sizing).length === 0 ||
-            !table.getAllLeafColumns().some(
-                (column) =>
-                    column.getCanResize() && Object.hasOwn(sizing, column.id),
-            ),
+            !table
+                .getAllLeafColumns()
+                .some(
+                    (column) =>
+                        column.getCanResize() &&
+                        Object.hasOwn(sizing, column.id),
+                ),
     }
     layouts.set(columns, layout)
     return layout
@@ -118,7 +121,10 @@ export function getTableColumnLayout<TData extends RowData>(
 ): readonly ResizeColumn[] {
     const layout = getConfiguredColumnLayout(table)
     if (availableWidth === Number.POSITIVE_INFINITY) return layout.configured
-    if (layout.fitted && Object.is(availableWidth, layout.fitted.availableWidth))
+    if (
+        layout.fitted &&
+        Object.is(availableWidth, layout.fitted.availableWidth)
+    )
         return layout.fitted.columns
     const columns = fitColumnWidths(
         layout.configured,

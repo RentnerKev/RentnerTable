@@ -147,9 +147,11 @@ test('keeps column minima and utility widths in a scrollable compact viewport', 
         ),
     ).toBe(true)
     expect(
-        await table.locator('col').evaluateAll((elements) =>
-            elements.map((element) => (element as HTMLElement).style.width),
-        ),
+        await table
+            .locator('col')
+            .evaluateAll((elements) =>
+                elements.map((element) => (element as HTMLElement).style.width),
+            ),
     ).toEqual(['48px', '48px', '40px', ...Array<string>(6).fill('64px')])
     const handle = page.getByRole('separator', {
         name: 'Resize Member',

@@ -41,7 +41,8 @@ export interface DataTableContext<TData extends RowData> {
 
 export type TablePageSizeOption = number | { value: number; label: string }
 
-export type TableSearchValue = string | number | boolean | bigint | Date | null | undefined
+export type TableSearchValue =
+    string | number | boolean | bigint | Date | null | undefined
 
 export interface DataTableClassNames {
     root?: string

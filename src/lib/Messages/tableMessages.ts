@@ -133,7 +133,9 @@ export function getTableLocale(locale: TableLocaleOption = 'en'): TableLocale {
 
 function definedMessages<T extends object>(overrides?: T): Partial<T> {
     return Object.fromEntries(
-        Object.entries(overrides ?? {}).filter(([, value]) => value !== undefined),
+        Object.entries(overrides ?? {}).filter(
+            ([, value]) => value !== undefined,
+        ),
     ) as Partial<T>
 }
 

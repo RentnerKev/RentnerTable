@@ -19,8 +19,7 @@ import type {
 
 export type TableLocale = 'de' | 'en'
 export type TableLocaleOption =
-    | TableLocale
-    | { code: TableLocale; messages?: Partial<TableMessages> }
+    TableLocale | { code: TableLocale; messages?: Partial<TableMessages> }
 export type TableColumnWidthMode = 'fit' | 'scroll'
 export type TableSize = 'sm' | 'md' | 'lg'
 

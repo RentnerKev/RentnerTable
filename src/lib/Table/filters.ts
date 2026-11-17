@@ -51,7 +51,9 @@ export const tableTextFilter = /* @__PURE__ */ Object.assign(
 export function createTableSearchFilter<TData>(
     getSearchValues: (
         row: TData,
-    ) => readonly (string | number | boolean | bigint | Date | null | undefined)[],
+    ) => readonly (
+        string | number | boolean | bigint | Date | null | undefined
+    )[],
 ) {
     return Object.assign(
         (row: { original: TData }, _columnId: string, value: unknown) => {

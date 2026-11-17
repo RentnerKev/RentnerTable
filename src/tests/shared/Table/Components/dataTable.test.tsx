@@ -81,7 +81,9 @@ describe('reusable data table', () => {
         )
         expect(rowNames()).toHaveLength(5)
         expect(screen.getByText('1–5 of 23 members')).toBeDefined()
-        expect(screen.getByRole('combobox', { name: 'Rows per page' }).textContent).toContain('5 members')
+        expect(
+            screen.getByRole('combobox', { name: 'Rows per page' }).textContent,
+        ).toContain('5 members')
         expect(screen.queryByText('23', { exact: true })).toBeNull()
     })
 
@@ -98,7 +100,10 @@ describe('reusable data table', () => {
         expect(screen.getByText('Member 09')).toBeDefined()
 
         rerender(
-            <DataTable {...table} getSearchValues={(person) => [person.joined]} />,
+            <DataTable
+                {...table}
+                getSearchValues={(person) => [person.joined]}
+            />,
         )
         await waitFor(() => expect(rowNames()).toHaveLength(0))
     })

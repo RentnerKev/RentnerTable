@@ -33,9 +33,7 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         return element.current
     }, [])
     const [ready, setReady] = useState(false)
-    const [viewportWidth, setViewportWidth] = useState(
-        Number.POSITIVE_INFINITY,
-    )
+    const [viewportWidth, setViewportWidth] = useState(Number.POSITIVE_INFINITY)
     useLayoutEffect(() => {
         if (!enabled) return
         const viewport = element.current?.parentElement
@@ -70,7 +68,9 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         setReady(true)
     }, [enabled, ready])
     const minimum =
-        enabled && widthMode === 'scroll' ? getTableColumnMinimumWidth(table) : 0
+        enabled && widthMode === 'scroll'
+            ? getTableColumnMinimumWidth(table)
+            : 0
     const availableWidth = Math.max(minimum, viewportWidth - extraWidth)
     const columns = getTableColumnLayout(table, availableWidth)
     const widths = useMemo(

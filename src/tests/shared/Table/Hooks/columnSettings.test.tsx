@@ -136,10 +136,15 @@ describe('isolated column layout drafts', () => {
                 })
                 return {
                     table: logic.table,
-                    settings: useTableColumnSettingsLogic({ table: logic.table }),
+                    settings: useTableColumnSettingsLogic({
+                        table: logic.table,
+                    }),
                 }
             })
-            const initialWidths = getTableColumnLayout(result.current.table, 600)
+            const initialWidths = getTableColumnLayout(
+                result.current.table,
+                600,
+            )
             act(() => result.current.table.setColumnSizing({ name: 260 }))
             expect(getTableColumnLayout(result.current.table, 600)).not.toEqual(
                 initialWidths,

@@ -60,11 +60,12 @@ export function DataTableToolbar<TData extends RowData>({
                             >
                                 {options.title ?? state.messages.title}
                             </h2>
-                            {options.showRowCount !== false && state.totalRows !== null && (
-                                <span className="rounded-md border border-rentner-border bg-rentner-control px-2 py-0.5 text-xs tabular-nums text-rentner-muted">
-                                    {state.totalRows}
-                                </span>
-                            )}
+                            {options.showRowCount !== false &&
+                                state.totalRows !== null && (
+                                    <span className="rounded-md border border-rentner-border bg-rentner-control px-2 py-0.5 text-xs tabular-nums text-rentner-muted">
+                                        {state.totalRows}
+                                    </span>
+                                )}
                             {options.isRefreshing && (
                                 <RefreshCw
                                     aria-label={state.messages.loading}

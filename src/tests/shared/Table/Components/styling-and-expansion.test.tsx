@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import {
+    cleanup,
+    fireEvent,
+    render,
+    screen,
+    within,
+} from '@testing-library/react'
 import { useState } from 'react'
 import type { ExpandedState } from '@tanstack/react-table'
 import {
@@ -189,7 +195,9 @@ describe('row expansion and event composition', () => {
                 {...base}
                 expansionMode="single"
                 onExpandedRowIdChange={(id) => changes.push(id)}
-                tableOptions={{ initialState: { expanded: { a: true, b: true } } }}
+                tableOptions={{
+                    initialState: { expanded: { a: true, b: true } },
+                }}
             />,
         )
         expect(screen.getByText('Details a')).toBeDefined()
@@ -214,9 +222,15 @@ describe('row expansion and event composition', () => {
         expect(within(table).getAllByRole('columnheader')).toHaveLength(2)
         const detail = screen.getByText('Details a').closest('td')
         expect(detail?.colSpan).toBe(2)
-        expect(within(table).queryByRole('button', { name: /details for/i })).toBeNull()
+        expect(
+            within(table).queryByRole('button', { name: /details for/i }),
+        ).toBeNull()
         rerender(
-            <DataTable {...base} expandedRowId={null} showExpandColumn={false} />,
+            <DataTable
+                {...base}
+                expandedRowId={null}
+                showExpandColumn={false}
+            />,
         )
         expect(screen.queryByText('Details a')).toBeNull()
     })

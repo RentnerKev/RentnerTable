@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTable } from '@tanstack/react-table'
-import type { CellData, Column, RowData, TableFeatures } from '@tanstack/react-table'
+import type {
+    CellData,
+    Column,
+    RowData,
+    TableFeatures,
+} from '@tanstack/react-table'
 import type { MenuItem } from '@rentnerkev/menu'
 import { rentnerTableFeatures } from '../../../lib/Table/table.ts'
 import {
@@ -10,7 +15,10 @@ import {
     getTableView,
     prepareTableColumns,
 } from '../../../lib/Table/presentation.ts'
-import { getTableLocale, resolveTableMessages } from '../../../lib/Messages/tableMessages.ts'
+import {
+    getTableLocale,
+    resolveTableMessages,
+} from '../../../lib/Messages/tableMessages.ts'
 import { getTableFilterSummary } from '../../../lib/Table/filterSummary.ts'
 import { createTableSearchFilter } from '../../../lib/Table/filters.ts'
 import type {
@@ -30,13 +38,23 @@ function isRowSearchColumn<
     TValue extends CellData,
 >(column: Column<TFeatures, TData, TValue>) {
     // A record-level predicate only needs one eligible accessor as its entry point.
-    return column.id === column.table.getAllLeafColumns().find((item) =>
-        item.accessorFn &&
-        (!('enableGlobalFilter' in item.columnDef) || item.columnDef.enableGlobalFilter !== false),
-    )?.id
+    return (
+        column.id ===
+        column.table
+            .getAllLeafColumns()
+            .find(
+                (item) =>
+                    item.accessorFn &&
+                    (!('enableGlobalFilter' in item.columnDef) ||
+                        item.columnDef.enableGlobalFilter !== false),
+            )?.id
+    )
 }
 
-function getPageSizes(options: readonly TablePageSizeOption[], currentSize: number) {
+function getPageSizes(
+    options: readonly TablePageSizeOption[],
+    currentSize: number,
+) {
     const labels = new Map([[currentSize, String(currentSize)]])
     for (const option of options) {
         if (typeof option !== 'number') labels.set(option.value, option.label)
@@ -101,7 +119,7 @@ export function useDataTableLogic<TData extends RowData>({
     )
     // TanStack keys its filtered model on data and query state, not filter identity.
     const tableData = useMemo(
-        () => rowSearchFilter ? [...ordered.state.data] : ordered.state.data,
+        () => (rowSearchFilter ? [...ordered.state.data] : ordered.state.data),
         [ordered.state.data, rowSearchFilter],
     )
     const expansion = useSingleRowExpansion({
