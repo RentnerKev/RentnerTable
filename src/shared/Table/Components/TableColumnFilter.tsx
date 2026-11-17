@@ -5,7 +5,9 @@ import { CustomSelect } from '@rentnerkev/select/select'
 import { getColumnLabel } from '../../../lib/Table/presentation.ts'
 import type { TableColumnFilterProps } from '../Types/dataTable.types.ts'
 
-const TableDateRangeFilter = lazy(() => import('./TableDateRangeFilter.tsx'))
+const TableDateRangeFilter = /* @__PURE__ */ lazy(
+    () => import('./TableDateRangeFilter.tsx'),
+)
 
 export function TableColumnFilter<TData extends RowData>({
     column,

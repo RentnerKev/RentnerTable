@@ -2,7 +2,7 @@
 
 import type { RowData } from '@tanstack/react-table'
 import { useTableLogic } from '../Hooks/useTableLogic.ts'
-import { TableSurface } from './TableSurface.tsx'
+import { TableViewport } from './TableViewport.tsx'
 import type { TableProps } from '../Types/table.types.ts'
 
 export function Table<TData extends RowData>({
@@ -27,7 +27,7 @@ export function Table<TData extends RowData>({
         resizableColumns,
     })
     return (
-        <TableSurface
+        <TableViewport
             {...appearance}
             resizableColumns={resizableColumns}
             table={table}

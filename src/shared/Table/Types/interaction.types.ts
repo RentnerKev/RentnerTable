@@ -122,12 +122,6 @@ export interface TableReorderProviderProps {
     children: ReactNode
 }
 
-export interface TableDragOptions {
-    disabled: boolean
-    reason?: string
-    moveRow: (label: string) => string
-}
-
 export interface TableRowPreview {
     element: HTMLTableElement
     left: number

@@ -15,7 +15,7 @@ import { useTableStyles } from '../Hooks/useTableStyles.ts'
 import { TableButton } from './TableButton.tsx'
 import type { DataTableToolbarProps } from '../Types/dataTable.types.ts'
 
-const Menu = lazy(() =>
+const Menu = /* @__PURE__ */ lazy(() =>
     import('@rentnerkev/menu/menu').then((module) => ({
         default: module.Menu,
     })),

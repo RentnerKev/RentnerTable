@@ -107,8 +107,10 @@ test('restores filters, sorting, column widths, visibility and page size after r
     ).toContainText('25')
 
     // A suspended debounce cannot save this edit; navigating must flush it.
-    await page.clock.install()
-    await page.clock.pauseAt(new Date())
+    const clockStart = new Date('2026-01-01T12:00:00Z')
+    await page.clock.install({ time: clockStart })
+    // Use the installed clock's timeline instead of racing the host clock.
+    await page.clock.pauseAt(new Date(clockStart.getTime() + 60_000))
     await page
         .getByRole('textbox', { name: 'Search table', exact: true })
         .fill('missing member')
