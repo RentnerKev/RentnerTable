@@ -1,5 +1,5 @@
 @import './theme.css';
-@import '@rentnerkev/inputs/tailwind.css';
+@import '@rentnerkev/inputs/text-input.css';
 @import '@rentnerkev/select/tailwind.css';
 @import '@rentnerkev/menu/tailwind.css';
 @import '@rentnerkev/calendar/tailwind.css';

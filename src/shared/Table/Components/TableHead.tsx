@@ -1,4 +1,5 @@
 import type { RowData } from '@tanstack/react-table'
+import { flexRender } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight } from 'lucide-react'
 import { getTableSlotClassName } from '../../../lib/Table/styling.ts'
 import { TableCheckbox } from './TableCheckbox.tsx'
@@ -122,9 +123,7 @@ export function TableHead<TData extends RowData>({
                                             className={`${getTableSlotClassName('rounded-sm text-left hover:text-rentner-foreground', classNames?.sortButton)} group/sort relative flex w-full cursor-pointer items-center gap-2 motion-safe:transition-colors focus-visible:outline-2 ${resizableColumns ? 'focus-visible:-outline-offset-2' : 'focus-visible:outline-offset-4'} focus-visible:outline-rentner-accent disabled:cursor-wait disabled:opacity-60 data-[align=center]:justify-center data-[align=center]:text-center data-[align=right]:justify-end data-[align=right]:text-right`}
                                         >
                                             <span className="min-w-0 truncate">
-                                                <table.FlexRender
-                                                    header={item.header}
-                                                />
+                                                {flexRender(item.header.column.columnDef.header, item.header.getContext())}
                                             </span>
                                             <span className="sr-only">
                                                 {' '}
@@ -164,9 +163,7 @@ export function TableHead<TData extends RowData>({
                                         </button>
                                     ) : (
                                         !item.header.isPlaceholder && (
-                                            <table.FlexRender
-                                                header={item.header}
-                                            />
+                                        flexRender(item.header.column.columnDef.header, item.header.getContext())
                                         )
                                     )}
                                 </div>
