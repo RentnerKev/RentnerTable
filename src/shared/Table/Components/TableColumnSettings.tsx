@@ -111,7 +111,7 @@ export function TableColumnSettings<TData extends RowData>(
                                     type="number"
                                     value={
                                         Number.isFinite(row.width)
-                                            ? row.width
+                                            ? Math.round(row.width)
                                             : ''
                                     }
                                     min={row.min}

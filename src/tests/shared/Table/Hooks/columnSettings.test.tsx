@@ -1,8 +1,16 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
+import {
+    act,
+    cleanup,
+    fireEvent,
+    render,
+    renderHook,
+    waitFor,
+} from '@testing-library/react'
 import { useState } from 'react'
 import { createTableColumnHelper } from '../../../../lib/Table/table.ts'
 import { getTableColumnLayout } from '../../../../lib/Table/columnLayout.ts'
+import { TableColumnSettings } from '../../../../shared/Table/Components/TableColumnSettings.tsx'
 import { useDataTableLogic } from '../../../../shared/Table/Hooks/useDataTableLogic.ts'
 import { useTableColumnSettingsLogic } from '../../../../shared/Table/Hooks/useTableColumnSettingsLogic.ts'
 import {
@@ -44,6 +52,39 @@ const base = {
 }
 
 describe('isolated column layout drafts', () => {
+    test('displays whole pixels without changing saved fractional widths', async () => {
+        const savedWidth = 287.8593749999999
+        function Fixture() {
+            const { table } = useDataTableLogic({
+                ...base,
+                tableOptions: {
+                    initialState: { columnSizing: { name: savedWidth } },
+                },
+            })
+            return (
+                <>
+                    <TableColumnSettings table={table} />
+                    <output>{table.state.columnSizing.name}</output>
+                </>
+            )
+        }
+
+        const fixture = render(<Fixture />)
+        fireEvent.click(
+            fixture.getByRole('button', { name: 'Column settings' }),
+        )
+        const width = fixture.getByRole<HTMLInputElement>('spinbutton', {
+            name: 'Width in pixels: Name',
+        })
+        expect(width.value).toBe('288')
+        await act(async () => {
+            fireEvent.click(
+                fixture.getByRole('button', { name: 'Apply layout' }),
+            )
+        })
+        expect(fixture.getByRole('status').textContent).toBe(String(savedWidth))
+    })
+
     test('cancel discards order, visibility and widths without touching the table', () => {
         const { result } = renderHook(() => {
             const logic = useDataTableLogic(base)
