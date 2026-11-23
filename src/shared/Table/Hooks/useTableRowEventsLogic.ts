@@ -17,43 +17,63 @@ function isControl(event: MouseEvent<HTMLTableRowElement>): boolean {
     )
 }
 
+const noopHandler = () => {}
+const emptyRowEventsResult = {
+    handler: {
+        handleClick: noopHandler,
+        handleDoubleClick: noopHandler,
+        handleContextMenu: noopHandler,
+    },
+}
+
 export function useTableRowEventsLogic<TData extends RowData>(
     row: TableRow<TData>,
     callbacks: TableRowEvents<TData>,
     options: TableRowEventOptions = {},
 ) {
+    const hasClick = Boolean(callbacks.onRowClick || options.expandOnRowClick)
+    const hasDoubleClick = Boolean(callbacks.onRowDoubleClick)
+    const hasContextMenu = Boolean(callbacks.onRowContextMenu)
+    if (!hasClick && !hasDoubleClick && !hasContextMenu)
+        return emptyRowEventsResult
     return {
         handler: {
-            handleClick: (event: MouseEvent<HTMLTableRowElement>) => {
-                if (
-                    event.defaultPrevented ||
-                    isControl(event) ||
-                    options.isLoading
-                )
-                    return
-                callbacks.onRowClick?.(row, event)
-                // Native double clicks contain two click events; expand only once.
-                if (
-                    !event.defaultPrevented &&
-                    options.expandOnRowClick &&
-                    event.detail <= 1 &&
-                    row.getCanExpand()
-                ) {
-                    row.toggleExpanded()
-                }
-            },
-            handleDoubleClick: (event: MouseEvent<HTMLTableRowElement>) => {
-                if (
-                    !event.defaultPrevented &&
-                    !isControl(event) &&
-                    !options.isLoading
-                )
-                    callbacks.onRowDoubleClick?.(row, event)
-            },
-            handleContextMenu: (event: MouseEvent<HTMLTableRowElement>) => {
-                if (!event.defaultPrevented)
-                    callbacks.onRowContextMenu?.(row, event)
-            },
+            handleClick: hasClick
+                ? (event: MouseEvent<HTMLTableRowElement>) => {
+                      if (
+                          event.defaultPrevented ||
+                          isControl(event) ||
+                          options.isLoading
+                      )
+                          return
+                      callbacks.onRowClick?.(row, event)
+                      // Native double clicks contain two click events; expand only once.
+                      if (
+                          !event.defaultPrevented &&
+                          options.expandOnRowClick &&
+                          event.detail <= 1 &&
+                          row.getCanExpand()
+                      ) {
+                          row.toggleExpanded()
+                      }
+                  }
+                : noopHandler,
+            handleDoubleClick: hasDoubleClick
+                ? (event: MouseEvent<HTMLTableRowElement>) => {
+                      if (
+                          !event.defaultPrevented &&
+                          !isControl(event) &&
+                          !options.isLoading
+                      )
+                          callbacks.onRowDoubleClick?.(row, event)
+                  }
+                : noopHandler,
+            handleContextMenu: hasContextMenu
+                ? (event: MouseEvent<HTMLTableRowElement>) => {
+                      if (!event.defaultPrevented)
+                          callbacks.onRowContextMenu?.(row, event)
+                  }
+                : noopHandler,
         },
     }
 }

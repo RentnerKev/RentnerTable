@@ -38,7 +38,11 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         if (!enabled) return
         const viewport = element.current?.parentElement
         if (!viewport) return
+        let lastViewportWidth = -1
+        let lastTableWidth = -1
         const measure = () => {
+            lastViewportWidth = viewport.clientWidth
+            lastTableWidth = element.current?.clientWidth ?? 0
             const minimum = element.current
                 ? element.current.ownerDocument.defaultView?.getComputedStyle(
                       element.current,
@@ -57,7 +61,14 @@ export function useTableColumnResizeLogic<TData extends RowData>(
         }
         measure()
         if (typeof ResizeObserver === 'undefined') return
-        const observer = new ResizeObserver(measure)
+        const observer = new ResizeObserver((entries) => {
+            if (
+                entries.length === 0 ||
+                viewport.clientWidth !== lastViewportWidth ||
+                (element.current?.clientWidth ?? 0) !== lastTableWidth
+            )
+                measure()
+        })
         observer.observe(viewport)
         if (element.current) observer.observe(element.current)
         return () => observer.disconnect()
@@ -73,18 +84,21 @@ export function useTableColumnResizeLogic<TData extends RowData>(
             : 0
     const availableWidth = Math.max(minimum, viewportWidth - extraWidth)
     const columns = getTableColumnLayout(table, availableWidth)
-    const widths = useMemo(
-        () => columns.map((column) => ({ id: column.id, width: column.size })),
-        [columns],
-    )
+    const { widths, totalWidth } = useMemo(() => {
+        const nextWidths: Array<{ id: string; width: number }> = []
+        let sum = 0
+        for (let i = 0; i < columns.length; i++) {
+            const column = columns[i]!
+            nextWidths.push({ id: column.id, width: column.size })
+            sum += column.size
+        }
+        return { widths: nextWidths, totalWidth: sum }
+    }, [columns])
     return {
         state: {
             fixed: enabled && ready,
             availableWidth,
-            width: widths.reduce(
-                (sum, column) => sum + column.width,
-                extraWidth,
-            ),
+            width: totalWidth + extraWidth,
             widths,
         },
         refs: { table: element },

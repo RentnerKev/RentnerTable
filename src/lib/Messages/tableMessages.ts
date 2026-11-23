@@ -132,11 +132,13 @@ export function getTableLocale(locale: TableLocaleOption = 'en'): TableLocale {
 }
 
 function definedMessages<T extends object>(overrides?: T): Partial<T> {
-    return Object.fromEntries(
-        Object.entries(overrides ?? {}).filter(
-            ([, value]) => value !== undefined,
-        ),
-    ) as Partial<T>
+    const result: Partial<T> = {}
+    if (!overrides) return result
+    for (const key of Object.keys(overrides) as Array<keyof T>) {
+        const value = overrides[key]
+        if (value !== undefined) result[key] = value
+    }
+    return result
 }
 
 export function resolveTableMessages(
@@ -147,11 +149,14 @@ export function resolveTableMessages(
     const code = getTableLocale(locale)
     const localeMessages =
         typeof locale === 'object' ? locale.messages : undefined
+    if (!localeMessages && !overrides && rowLabel === undefined) {
+        return messages[code]
+    }
     const customMessages = {
         ...definedMessages(localeMessages),
         ...definedMessages(overrides),
     }
-    const resolved = { ...getTableMessages(code), ...customMessages }
+    const resolved = { ...messages[code], ...customMessages }
     if (localeMessages?.columnSettings || overrides?.columnSettings) {
         resolved.columnSettings = {
             ...definedMessages(localeMessages?.columnSettings),

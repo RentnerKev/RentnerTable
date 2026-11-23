@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, MouseEvent, TouchEvent } from 'react'
+import { batch } from '@tanstack/react-store'
 import type { RowData } from '@tanstack/react-table'
 import { getColumnLabel } from '../../../lib/Table/presentation.ts'
 import {
@@ -109,20 +110,28 @@ export function useTableResizeHandleLogic<TData extends RowData>({
                 }
                 setPreviewOffset(boundaryOffset * layoutDirection)
             }
-            if (changed)
-                table.setColumnResizing((current) => ({
-                    ...current,
-                    deltaOffset: offset,
-                    deltaPercentage: startSize > 0 ? offset / startSize : 0,
-                }))
-            if (
+            const shouldCommitSizing =
                 (mode === 'onChange' &&
                     changed &&
                     (offset !== 0 || hasResized)) ||
                 (end && mode !== 'onChange' && offset !== 0)
-            ) {
-                hasResized = true
-                table.setColumnSizing((current) => ({ ...current, ...next }))
+            if (changed || shouldCommitSizing) {
+                batch(() => {
+                    if (changed)
+                        table.setColumnResizing((current) => ({
+                            ...current,
+                            deltaOffset: offset,
+                            deltaPercentage:
+                                startSize > 0 ? offset / startSize : 0,
+                        }))
+                    if (shouldCommitSizing) {
+                        hasResized = true
+                        table.setColumnSizing((current) => ({
+                            ...current,
+                            ...next,
+                        }))
+                    }
+                })
             }
         }
         // Input devices can emit several moves before a paint. Keep the latest
@@ -146,10 +155,12 @@ export function useTableResizeHandleLogic<TData extends RowData>({
             }
             // A release may arrive before the queued frame: flush its exact
             // position synchronously so quick drags never lose their final width.
-            if (!cancel) update(nextX, true)
+            batch(() => {
+                if (!cancel) update(nextX, true)
+                table.resetHeaderSizeInfo(true)
+            })
             removeListeners()
             setPreviewOffset(0)
-            table.resetHeaderSizeInfo(true)
         }
         const mouseMove = (move: globalThis.MouseEvent) =>
             schedule(move.clientX)
@@ -208,7 +219,10 @@ export function useTableResizeHandleLogic<TData extends RowData>({
     const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
         if (
             disabled ||
-            !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)
+            (event.key !== 'ArrowLeft' &&
+                event.key !== 'ArrowRight' &&
+                event.key !== 'Home' &&
+                event.key !== 'End')
         )
             return
         event.preventDefault()

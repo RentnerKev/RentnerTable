@@ -115,8 +115,12 @@ export function useTableStatePersistence<TData extends RowData>(
     }, [])
 
     const enqueue = useCallback(
-        (session: TablePersistenceSession, snapshot: TableStateSnapshot) => {
-            const signature = JSON.stringify(snapshot)
+        (
+            session: TablePersistenceSession,
+            snapshot: TableStateSnapshot,
+            precomputedSignature?: string,
+        ) => {
+            const signature = precomputedSignature ?? JSON.stringify(snapshot)
             if (signature === (session.lastQueued ?? session.lastWritten))
                 return writes.current
             session.lastQueued = signature
@@ -144,17 +148,27 @@ export function useTableStatePersistence<TData extends RowData>(
     )
 
     const schedule = useCallback(
-        (session: TablePersistenceSession, snapshot: TableStateSnapshot) => {
+        (
+            session: TablePersistenceSession,
+            snapshot: TableStateSnapshot,
+            signature?: string,
+        ) => {
             if (!session.ready || !session.active) return
             if (session.timer !== undefined) clearTimeout(session.timer)
             session.pending = snapshot
+            session.pendingSignature = signature
             const delay = latest.current.options?.debounceMs ?? 250
             session.timer = setTimeout(
                 () => {
                     session.timer = undefined
                     const pending = session.pending
+                    const pendingSignature = session.pendingSignature
                     session.pending = undefined
-                    if (pending) enqueue(session, pending).catch(() => {})
+                    session.pendingSignature = undefined
+                    if (pending)
+                        enqueue(session, pending, pendingSignature).catch(
+                            () => {},
+                        )
                 },
                 Number.isFinite(delay)
                     ? Math.min(2_147_483_647, Math.max(0, delay))
@@ -187,18 +201,26 @@ export function useTableStatePersistence<TData extends RowData>(
                 return
             session.observed = source
             const next = createTableStateSnapshot(source, selected)
-            if (JSON.stringify(next) === JSON.stringify(session.baseline))
-                return
+            const nextSignature = JSON.stringify(next)
+            const baselineSignature =
+                session.baselineSignature ??
+                (session.baselineSignature = JSON.stringify(session.baseline))
+            if (nextSignature === baselineSignature) return
             session.cleared = undefined
-            for (const field of Object.keys(next.state) as TableStateField[]) {
-                if (
-                    JSON.stringify(next.state[field]) !==
-                    JSON.stringify(session.baseline.state[field])
-                )
-                    session.dirty.add(field)
+            if (!session.ready) {
+                for (const field of Object.keys(
+                    next.state,
+                ) as TableStateField[]) {
+                    if (
+                        JSON.stringify(next.state[field]) !==
+                        JSON.stringify(session.baseline.state[field])
+                    )
+                        session.dirty.add(field)
+                }
             }
             session.baseline = next
-            schedule(session, next)
+            session.baselineSignature = nextSignature
+            schedule(session, next, nextSignature)
         },
         [readState, schedule, restoring],
     )
@@ -230,6 +252,7 @@ export function useTableStatePersistence<TData extends RowData>(
             session.initializing = false
             session.ready = true
             session.baseline = getState()
+            session.baselineSignature = undefined
             session.observed = readState()
             session.finishRestore?.()
             session.finishRestore = undefined
@@ -251,8 +274,10 @@ export function useTableStatePersistence<TData extends RowData>(
             session.initializing = false
             session.dirty.clear()
             session.baseline = getState()
+            session.baselineSignature = undefined
             session.observed = readState()
             session.pending = undefined
+            session.pendingSignature = undefined
             if (session.timer !== undefined) clearTimeout(session.timer)
             if (session.active) {
                 setActiveScope(session.scope)
@@ -375,13 +400,15 @@ export function useTableStatePersistence<TData extends RowData>(
                 return
             const snapshot = getState()
             if (session.browser) {
-                if (session.cleared === JSON.stringify(snapshot)) return
+                const signature = JSON.stringify(snapshot)
+                if (session.cleared === signature) return
                 // Browser storage is synchronous; commit before a real reload can discard a debounce timer.
                 if (session.timer !== undefined) clearTimeout(session.timer)
                 session.pending = undefined
+                session.pendingSignature = undefined
                 try {
                     session.adapter.save(session.key, snapshot)
-                    session.lastWritten = JSON.stringify(snapshot)
+                    session.lastWritten = signature
                 } catch (cause) {
                     report(session, cause, 'save')
                 }
@@ -396,7 +423,11 @@ export function useTableStatePersistence<TData extends RowData>(
             for (const subscription of subscriptions) subscription.unsubscribe()
             window.removeEventListener('pagehide', pageHide)
             if (session.ready && session.pending)
-                enqueue(session, session.pending).catch(() => {})
+                enqueue(
+                    session,
+                    session.pending,
+                    session.pendingSignature,
+                ).catch(() => {})
             if (sessionRef.current === session) sessionRef.current = null
         }
     }, [scope, atoms, getState, readState, load, observe, enqueue, report])
@@ -427,6 +458,7 @@ export function useTableStatePersistence<TData extends RowData>(
                 session.initializing = true
                 if (session.timer !== undefined) clearTimeout(session.timer)
                 session.pending = undefined
+                session.pendingSignature = undefined
                 session.cleared = undefined
                 session.lastQueued = undefined
                 session.lastWritten = undefined
@@ -447,6 +479,7 @@ export function useTableStatePersistence<TData extends RowData>(
         if (!session.active || !session.ready) return
         if (session.timer !== undefined) clearTimeout(session.timer)
         session.pending = undefined
+        session.pendingSignature = undefined
         await enqueue(session, getState())
     }, [enqueue, getState])
 
@@ -461,10 +494,13 @@ export function useTableStatePersistence<TData extends RowData>(
         session.ready = true
         if (session.timer !== undefined) clearTimeout(session.timer)
         session.pending = undefined
+        session.pendingSignature = undefined
         session.baseline = getState()
         session.observed = readState()
-        session.lastQueued = JSON.stringify(session.baseline)
-        session.cleared = session.lastQueued
+        const clearedSignature = JSON.stringify(session.baseline)
+        session.baselineSignature = clearedSignature
+        session.lastQueued = clearedSignature
+        session.cleared = clearedSignature
         const job = writes.current.then(() => {
             const adapter = getAdapter(session)
             return adapter.remove

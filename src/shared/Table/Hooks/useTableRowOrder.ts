@@ -36,7 +36,20 @@ export function useTableRowOrder<TData extends RowData>({
         const result = moveTableRow(rows, getRowId, activeId, overId)
         if (!result) return
         if (onRowOrderChange) onRowOrderChange(result.data, result.change)
-        else setOrder(result.data.map(getRowId))
+        else if (!isLoading && rowOrder && rowOrder.length === rows.length) {
+            const nextOrder = rowOrder.slice()
+            const { fromIndex, toIndex } = result.change
+            const moved = nextOrder[fromIndex]!
+            if (fromIndex < toIndex) {
+                for (let index = fromIndex; index < toIndex; index++)
+                    nextOrder[index] = nextOrder[index + 1]!
+            } else {
+                for (let index = fromIndex; index > toIndex; index--)
+                    nextOrder[index] = nextOrder[index - 1]!
+            }
+            nextOrder[toIndex] = moved
+            setOrder(nextOrder)
+        } else setOrder(result.data.map(getRowId))
     }
     return {
         state: { data: rows, rowOrder },

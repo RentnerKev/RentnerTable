@@ -18,7 +18,9 @@ import type {
 } from '../Types/nativeDrag.types.ts'
 
 export const NativeTableDragContext =
-    createContext<NativeTableDragContextValue | null>(null)
+    /* @__PURE__ */ createContext<NativeTableDragContextValue | null>(null)
+
+const scrollableOverflowPattern = /(auto|scroll|overlay)/
 
 function snapshotRow(source: HTMLTableSectionElement): TableRowPreview | null {
     const table = source.closest('table')
@@ -74,9 +76,9 @@ function scrollAncestors(source: HTMLElement): Element[] {
         const style = view.getComputedStyle(node)
         if (
             node !== source &&
-            [style.overflow, style.overflowX, style.overflowY].some((value) =>
-                /(auto|scroll|overlay)/.test(value),
-            )
+            (scrollableOverflowPattern.test(style.overflow) ||
+                scrollableOverflowPattern.test(style.overflowX) ||
+                scrollableOverflowPattern.test(style.overflowY))
         )
             parents.push(node)
         if (style.position === 'fixed') return parents
@@ -108,11 +110,27 @@ function createController(
 ): NativeTableDragController {
     let options = initial
     const nodes = new Map<string, HTMLTableSectionElement>()
+    let rowIds: string[] = []
+    const rowIndexById = new Map<string, number>()
+    let indexedRows: TableReorderProviderProps['rows'] | null = null
+    const syncRows = (rows: TableReorderProviderProps['rows']) => {
+        if (rows === indexedRows) return
+        indexedRows = rows
+        rowIds = []
+        rowIndexById.clear()
+        for (let i = 0; i < rows.length; i++) {
+            const id = rows[i]!.id
+            rowIds.push(id)
+            rowIndexById.set(id, i)
+        }
+    }
+    syncRows(initial.rows)
     let session: {
         id: string
         handle: HTMLButtonElement
         doc: Document
         source: HTMLTableSectionElement
+        viewport: HTMLElement | null
         pointerId: number | null
         touch: boolean
         startX: number
@@ -121,6 +139,8 @@ function createController(
         y: number
         active: boolean
         over: string | null
+        lastMovedOver: string | null | undefined
+        lastMovedHeight: number
         preview: TableRowPreview | null
         top: number
         height: number
@@ -133,20 +153,25 @@ function createController(
         cleanup: () => void
     } | null = null
     let announcement = ''
+    let previewHost: HTMLDivElement | null = null
+    let publishedActiveId: string | null = null
+    let publishedPreview: TableRowPreview | null = null
+    let publishedTop = 0
+    let publishedAnnouncement = ''
+    let lastOffset = 0
     let restoreFrame: number | null = null
     let restoreView: Window | null = null
     const geometry = new Map<
         string,
         { top: number; bottom: number; height: number }
     >()
-    const items = () => options.rows.map((row) => row.id)
     const announce = (
         kind: 'dragStart' | 'dragOver' | 'dragEnd' | 'dragCancel',
         id: string,
         over: string | null,
     ) => {
         const label = options.getLabel(id)
-        const position = items().indexOf(over ?? id) + 1
+        const position = (rowIndexById.get(over ?? id) ?? -1) + 1
         const translated =
             kind === 'dragStart' || kind === 'dragCancel'
                 ? options.messages[kind]?.(label)
@@ -161,20 +186,31 @@ function createController(
                     ? `Moved to position ${position}.`
                     : 'Move cancelled.')
     }
-    const display = () => {
-        const current = session
+    const emit = (
+        activeId: string | null,
+        preview: TableRowPreview | null,
+        top: number,
+        offset: number,
+    ) => {
+        publishedActiveId = activeId
+        publishedPreview = preview
+        publishedTop = top
+        publishedAnnouncement = announcement
+        lastOffset = offset
         publish({
-            activeId: current?.active ? current.id : null,
-            preview:
-                current?.active && current.preview
-                    ? {
-                          ...current.preview,
-                          top: current.top,
-                          offset: current.y - current.startY,
-                      }
-                    : null,
+            activeId,
+            preview: preview ? { ...preview, top, offset } : null,
             announcement,
         })
+    }
+    const display = () => {
+        const current = session
+        emit(
+            current?.active ? current.id : null,
+            current?.active && current.preview ? current.preview : null,
+            current?.top ?? 0,
+            current ? current.y - current.startY : 0,
+        )
     }
     const resetRows = () => {
         for (const node of nodes.values()) {
@@ -209,8 +245,8 @@ function createController(
                 commit &&
                 !options.disabled &&
                 current.over !== null &&
-                items().includes(current.id) &&
-                items().includes(current.over)
+                rowIndexById.has(current.id) &&
+                rowIndexById.has(current.over)
             announce(valid ? 'dragEnd' : 'dragCancel', current.id, current.over)
             display()
             if (valid && current.over !== current.id && current.over)
@@ -244,11 +280,17 @@ function createController(
     const moveRows = () => {
         const current = session
         if (!current?.active) return
-        const order = items()
-        const from = order.indexOf(current.id)
-        const to = order.indexOf(current.over ?? current.id)
-        for (let index = 0; index < order.length; index++) {
-            const id = order[index]
+        if (
+            current.lastMovedOver === current.over &&
+            current.lastMovedHeight === current.height
+        )
+            return
+        current.lastMovedOver = current.over
+        current.lastMovedHeight = current.height
+        const from = rowIndexById.get(current.id) ?? -1
+        const to = rowIndexById.get(current.over ?? current.id) ?? -1
+        for (let index = 0; index < rowIds.length; index++) {
+            const id = rowIds[index]!
             const node = nodes.get(id)
             if (!node || id === current.id) continue
             const offset =
@@ -290,7 +332,7 @@ function createController(
                 offset = bottom - current.top - current.height
         }
         const pointerY = current.y
-        const viewport = current.source.closest('table')?.parentElement
+        const viewport = current.viewport
         const viewportBounds = viewport?.getBoundingClientRect()
         let over: string | null = null
         if (current.pointerId === null) over = current.over
@@ -301,10 +343,12 @@ function createController(
             pointerY >= top &&
             pointerY <= bottom
         ) {
-            for (const id of items()) {
+            const scrollOffset = bounds.top - current.top
+            for (let index = 0; index < rowIds.length; index++) {
+                const id = rowIds[index]!
                 const node = nodes.get(id)
                 if (!node) continue
-                const rect = rectFor(id, node, bounds.top - current.top)
+                const rect = rectFor(id, node, scrollOffset)
                 if (pointerY >= rect.top && pointerY <= rect.bottom) {
                     over = id
                     break
@@ -316,13 +360,18 @@ function createController(
             if (over) announce('dragOver', current.id, over)
         }
         moveRows()
-        publish({
-            activeId: current.id,
-            preview: current.preview
-                ? { ...current.preview, top: current.top, offset }
-                : null,
-            announcement,
-        })
+        if (
+            previewHost &&
+            publishedActiveId === current.id &&
+            publishedPreview === current.preview &&
+            publishedTop === current.top &&
+            publishedAnnouncement === announcement
+        ) {
+            lastOffset = offset
+            previewHost.style.transform = `translate3d(0, ${offset}px, 0)`
+        } else {
+            emit(current.id, current.preview, current.top, offset)
+        }
         if (
             current.pointerId !== null &&
             current.x >= (viewportBounds?.left ?? 0) &&
@@ -375,7 +424,7 @@ function createController(
     }
     const activate = () => {
         const current = session
-        if (!current || options.disabled || !items().includes(current.id)) {
+        if (!current || options.disabled || !rowIndexById.has(current.id)) {
             finish(false)
             return
         }
@@ -387,6 +436,8 @@ function createController(
         }
         current.active = true
         current.over = current.id
+        current.lastMovedOver = undefined
+        current.lastMovedHeight = 0
         const bounds = current.source.getBoundingClientRect()
         current.top = bounds.top
         current.height = bounds.height
@@ -407,7 +458,7 @@ function createController(
         y: number,
         touch: boolean,
     ) => {
-        if (session || options.disabled || !items().includes(id)) return false
+        if (session || options.disabled || !rowIndexById.has(id)) return false
         if (restoreFrame !== null) {
             restoreView?.cancelAnimationFrame(restoreFrame)
             restoreFrame = null
@@ -503,6 +554,7 @@ function createController(
         session = {
             id,
             source,
+            viewport: source.closest('table')?.parentElement ?? null,
             handle,
             doc,
             pointerId,
@@ -513,6 +565,8 @@ function createController(
             y,
             active: false,
             over: null,
+            lastMovedOver: undefined,
+            lastMovedHeight: 0,
             preview: null,
             top: 0,
             height: 0,
@@ -545,6 +599,11 @@ function createController(
                 nodes.delete(id)
                 if (session?.id === id) finish(false, false)
             }
+        },
+        setPreviewHost: (element) => {
+            previewHost = element
+            if (element && session?.active)
+                element.style.transform = `translate3d(0, ${lastOffset}px, 0)`
         },
         pointer: (id, event) => {
             if (
@@ -584,30 +643,29 @@ function createController(
             } else if (
                 session?.id === id &&
                 session.pointerId === null &&
-                ['ArrowLeft', 'ArrowRight'].includes(event.key)
+                (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
             ) {
                 event.preventDefault()
             } else if (
                 session?.id === id &&
                 session.pointerId === null &&
-                ['ArrowUp', 'ArrowDown'].includes(event.key)
+                (event.key === 'ArrowUp' || event.key === 'ArrowDown')
             ) {
                 event.preventDefault()
-                const order = items()
-                const index = order.indexOf(session.over ?? id)
+                const index = rowIndexById.get(session.over ?? id) ?? -1
                 const next =
-                    order[
+                    rowIds[
                         Math.max(
                             0,
                             Math.min(
-                                order.length - 1,
+                                rowIds.length - 1,
                                 index + (event.key === 'ArrowDown' ? 1 : -1),
                             ),
                         )
                     ]
-                const node = nodes.get(next)
+                const node = next !== undefined ? nodes.get(next) : undefined
                 const activeNode = nodes.get(id)
-                if (node && activeNode) {
+                if (next !== undefined && node && activeNode) {
                     session.over = next
                     session.y =
                         rectFor(next, node).top - rectFor(id, activeNode).top
@@ -622,12 +680,15 @@ function createController(
         },
         update: (props) => {
             options = props
-            if (
-                session &&
-                (props.disabled ||
-                    !props.rows.some((row) => row.id === session?.id))
-            )
+            syncRows(props.rows)
+            if (session && (props.disabled || !rowIndexById.has(session.id)))
                 finish(false)
+            else if (
+                session?.active &&
+                previewHost &&
+                publishedActiveId === session.id
+            )
+                previewHost.style.transform = `translate3d(0, ${lastOffset}px, 0)`
         },
         dispose: () => {
             finish(false, false)
@@ -650,12 +711,13 @@ export function useNativeTableDragLogic(props: TableReorderProviderProps) {
     const previewElement = display.preview?.element
     const previewRef = useCallback(
         (element: HTMLDivElement | null) => {
+            controller.setPreviewHost(element)
             if (element)
                 element.replaceChildren(
                     ...(previewElement ? [previewElement] : []),
                 )
         },
-        [previewElement],
+        [controller, previewElement],
     )
     const context = useMemo(
         () => ({

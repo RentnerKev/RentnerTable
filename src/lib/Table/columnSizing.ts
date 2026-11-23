@@ -104,34 +104,39 @@ export function resizeColumnWidths(
     requested: number,
 ): Record<string, number> {
     const fitted = fitColumnWidths(columns, available)
-    const targetIndex = fitted.findIndex((column) => column.id === id)
-    const target = fitted[targetIndex]
+    const len = fitted.length
+    let targetIndex = -1
+    let total = 0
+    for (let i = 0; i < len; i += 1) {
+        const col = fitted[i]!
+        total += col.size
+        if (targetIndex === -1 && col.id === id) targetIndex = i
+    }
+    const target = targetIndex >= 0 ? fitted[targetIndex] : undefined
     if (!target?.resizable) return {}
-    const maximum = getColumnResizeMaximum(fitted, available, id)
+    let capacity = 0
+    for (let i = targetIndex + 1; i < len; i += 1) {
+        const col = fitted[i]!
+        if (col.resizable && col.size > col.min) {
+            capacity += col.size - col.min
+        }
+    }
+    const free = Math.max(0, available - total)
+    const maximum = Math.min(target.max, target.size + free + capacity)
     const size = Math.min(maximum, Math.max(target.min, requested))
-    const total = fitted.reduce((sum, column) => sum + column.size, 0)
-    const reduction = Math.max(
-        0,
-        size - target.size - Math.max(0, available - total),
-    )
-    const capacity = fitted
-        .slice(targetIndex + 1)
-        .reduce(
-            (sum, column) =>
-                sum +
-                (column.resizable ? Math.max(0, column.size - column.min) : 0),
-            0,
-        )
-    return Object.fromEntries(
-        fitted.map((column, index) => [
-            column.id,
-            index === targetIndex
-                ? size
-                : column.size -
-                  (index > targetIndex && column.resizable && capacity > 0
-                      ? (Math.max(0, column.size - column.min) / capacity) *
-                        reduction
-                      : 0),
-        ]),
-    )
+    const reduction = Math.max(0, size - target.size - free)
+    const result: Record<string, number> = {}
+    const reductionRatio = capacity > 0 ? reduction / capacity : 0
+    for (let i = 0; i < len; i += 1) {
+        const col = fitted[i]!
+        if (i === targetIndex) {
+            result[col.id] = size
+        } else if (i > targetIndex && col.resizable && reductionRatio > 0) {
+            result[col.id] =
+                col.size - Math.max(0, col.size - col.min) * reductionRatio
+        } else {
+            result[col.id] = col.size
+        }
+    }
+    return result
 }

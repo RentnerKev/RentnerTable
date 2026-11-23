@@ -43,6 +43,26 @@ export function TableDataRow<TData extends RowData>({
             isLoading,
         },
     )
+    const isSelected = Boolean(
+        selection?.selectionEnabled && row.getIsSelected(),
+    )
+    const isExpanded = Boolean(renderExpandedRow && row.getIsExpanded())
+    const canExpand =
+        renderExpandedRow && (showExpandColumn || expandOnRowClick)
+            ? row.getCanExpand()
+            : false
+    const needsRowLabel = Boolean(
+        (reorderableRows && !dragHandle) ||
+        selection?.selectionEnabled ||
+        (renderExpandedRow && showExpandColumn),
+    )
+    const rowLabelText = needsRowLabel
+        ? (getRowLabel?.(row.original) ?? row.id)
+        : ''
+    const detailsElementId =
+        renderExpandedRow && (showExpandColumn || isExpanded)
+            ? `${detailsId}-${encodeURIComponent(row.id)}`
+            : undefined
     return (
         <>
             {/* Optional mouse notifications supplement the accessible controls rendered inside cells. */}
@@ -53,9 +73,7 @@ export function TableDataRow<TData extends RowData>({
                         !isLoading &&
                         (onRowClick ||
                             onRowDoubleClick ||
-                            (expandOnRowClick &&
-                                renderExpandedRow &&
-                                row.getCanExpand())),
+                            (expandOnRowClick && canExpand)),
                     ) || undefined
                 }
                 data-stripe={striped && index % 2 === 1 ? true : undefined}
@@ -70,10 +88,7 @@ export function TableDataRow<TData extends RowData>({
                 onContextMenu={
                     onRowContextMenu ? handler.handleContextMenu : undefined
                 }
-                data-selected={
-                    (selection?.selectionEnabled && row.getIsSelected()) ||
-                    undefined
-                }
+                data-selected={isSelected || undefined}
                 className={`data-[clickable=true]:cursor-pointer border-b border-rentner-border motion-safe:transition-colors group-data-[striped=true]/table:data-[stripe=true]:bg-rentner-control/25 hover:bg-rentner-control/70 hover:shadow-[inset_3px_0_0_var(--rentner-accent,#13ecd6)] data-[selected=true]:bg-rentner-accent/5 ${classNames?.row ?? ''} ${rowClassName?.(row) ?? ''}`}
             >
                 {reorderableRows && (
@@ -83,9 +98,8 @@ export function TableDataRow<TData extends RowData>({
                                 iconOnly
                                 disabled
                                 aria-label={
-                                    view.messages.moveRow?.(
-                                        getRowLabel?.(row.original) ?? row.id,
-                                    ) ?? `Move ${row.id}`
+                                    view.messages.moveRow?.(rowLabelText) ??
+                                    `Move ${row.id}`
                                 }
                             >
                                 <GripVertical
@@ -99,11 +113,9 @@ export function TableDataRow<TData extends RowData>({
                 {selection?.selectionEnabled && (
                     <td className="w-12 px-4 py-3">
                         <TableCheckbox
-                            checked={row.getIsSelected()}
+                            checked={isSelected}
                             disabled={isLoading || !row.getCanSelect()}
-                            label={view.messages.selectRow(
-                                getRowLabel?.(row.original) ?? row.id,
-                            )}
+                            label={view.messages.selectRow(rowLabelText)}
                             onChange={() => row.toggleSelected()}
                         />
                     </td>
@@ -113,23 +125,19 @@ export function TableDataRow<TData extends RowData>({
                         <TableButton
                             iconOnly
                             slot="expandButton"
-                            disabled={isLoading || !row.getCanExpand()}
+                            disabled={isLoading || !canExpand}
                             aria-label={
-                                row.getIsExpanded()
-                                    ? view.messages.collapseRow(
-                                          getRowLabel?.(row.original) ?? row.id,
-                                      )
-                                    : view.messages.expandRow(
-                                          getRowLabel?.(row.original) ?? row.id,
-                                      )
+                                isExpanded
+                                    ? view.messages.collapseRow(rowLabelText)
+                                    : view.messages.expandRow(rowLabelText)
                             }
-                            aria-expanded={row.getIsExpanded()}
-                            aria-controls={`${detailsId}-${encodeURIComponent(row.id)}`}
+                            aria-expanded={isExpanded}
+                            aria-controls={detailsElementId}
                             onClick={row.getToggleExpandedHandler()}
                         >
                             <ChevronRight
                                 aria-hidden="true"
-                                className={`${getTableSlotClassName('size-4', classNames?.expandIcon)} ${row.getIsExpanded() ? 'rotate-90' : ''}`}
+                                className={`${getTableSlotClassName('size-4', classNames?.expandIcon)} ${isExpanded ? 'rotate-90' : ''}`}
                             />
                         </TableButton>
                     </td>
@@ -170,7 +178,7 @@ export function TableDataRow<TData extends RowData>({
                     </td>
                 ))}
             </tr>
-            {renderExpandedRow && row.getIsExpanded() && (
+            {renderExpandedRow && isExpanded && (
                 <tr
                     data-row-details-for={row.id}
                     className={classNames?.expandedRow}
@@ -183,7 +191,7 @@ export function TableDataRow<TData extends RowData>({
                         )}
                     >
                         <div
-                            id={`${detailsId}-${encodeURIComponent(row.id)}`}
+                            id={detailsElementId}
                             className={classNames?.expandedContent}
                         >
                             {renderExpandedRow(row)}

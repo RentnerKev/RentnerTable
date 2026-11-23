@@ -34,9 +34,11 @@ export interface TablePersistenceSession {
     loading: Promise<void>
     finishRestore?: () => void
     baseline: TableStateSnapshot
+    baselineSignature?: string
     observed: Record<TableStateField, unknown>
     dirty: Set<TableStateField>
     pending?: TableStateSnapshot
+    pendingSignature?: string
     timer?: ReturnType<typeof setTimeout>
     lastQueued?: string
     lastWritten?: string
