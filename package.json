@@ -91,10 +91,10 @@
         "react-dom": "^19.0.0"
     },
     "dependencies": {
-        "@rentnerkev/calendar": "^2.10.1",
-        "@rentnerkev/inputs": "^2.8.2",
-        "@rentnerkev/menu": "^1.2.0",
-        "@rentnerkev/select": "^6.2.0",
+        "@rentnerkev/calendar": "^2.10.2",
+        "@rentnerkev/inputs": "^2.8.3",
+        "@rentnerkev/menu": "^1.2.1",
+        "@rentnerkev/select": "^6.2.1",
         "@tanstack/react-store": "^0.11.2",
         "@tanstack/react-table": "^9.3.1",
         "lucide-react": "^1.77.0"

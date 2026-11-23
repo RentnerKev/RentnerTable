@@ -5,10 +5,10 @@
     "": {
       "name": "@rentnerkev/table",
       "dependencies": {
-        "@rentnerkev/calendar": "^2.10.1",
-        "@rentnerkev/inputs": "^2.8.2",
-        "@rentnerkev/menu": "^1.2.0",
-        "@rentnerkev/select": "^6.2.0",
+        "@rentnerkev/calendar": "^2.10.2",
+        "@rentnerkev/inputs": "^2.8.3",
+        "@rentnerkev/menu": "^1.2.1",
+        "@rentnerkev/select": "^6.2.1",
         "@tanstack/react-store": "^0.11.2",
         "@tanstack/react-table": "^9.3.1",
         "lucide-react": "^1.77.0",
@@ -86,13 +86,13 @@
 
     "@playwright/test": ["@playwright/test@1.65.1", "", { "dependencies": { "playwright": "1.65.1" }, "bin": { "playwright": "cli.js" } }, "sha512-y+NCIRm2LvY4slUVWvGh1nujJ8RF/hEisIsq2mtUPgdQC4L701bq5hZGMhrpeXjACvwvO9tj5dJqhvM6TP9lbw=="],
 
-    "@rentnerkev/calendar": ["@rentnerkev/calendar@2.10.1", "", { "dependencies": { "@rentnerkev/tooltips": "^2.3.0", "lucide-react": "^1.69.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-Xv6zvqKzbjauzgY5QvVArnuCg/nAGl/YuKyv5nPyI/Yq+owAR1hnuDwzEWCyz304I6l3iW05oSH1ZwOtrE9SUw=="],
+    "@rentnerkev/calendar": ["@rentnerkev/calendar@2.10.2", "", { "dependencies": { "@rentnerkev/tooltips": "^2.3.2", "lucide-react": "^1.77.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-mo42/sKpIDAeVcoGhN7xI9ZHG6L0J2/uyMgSEYtjlHa/VSksGvBZ695ybA1t00qkh+oecykYty5pRnhbFnfeKQ=="],
 
-    "@rentnerkev/inputs": ["@rentnerkev/inputs@2.8.2", "", { "dependencies": { "@rentnerkev/tooltips": "^2.3.0", "lucide-react": "^1.69.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-hp41MvQF+7Ati1bCunoDt9bkpRTZuleeTQJpKrzcsVADmJoGNxvImHSfCZzA5AZeF+bDx0h9uaymlWecC7J9nQ=="],
+    "@rentnerkev/inputs": ["@rentnerkev/inputs@2.8.3", "", { "dependencies": { "@rentnerkev/tooltips": "^2.3.3", "lucide-react": "^1.77.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-dkYGcZf+Gt/XLfM9uDLZwKz+Br8CGOGuakaQeZxkiPD28/05nfcYtoJtUEryyttPDr5AR+wzsLsCoeox/4bN1w=="],
 
-    "@rentnerkev/menu": ["@rentnerkev/menu@1.2.0", "", { "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-umn86C3FflMpgJK1yXxWoOVjiQXm0WKBjyDnoRZnVMpqbqe5oBbKRFa/bubK4tcXi2ukMJZkE8J+Labra8hYEg=="],
+    "@rentnerkev/menu": ["@rentnerkev/menu@1.2.1", "", { "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-PgI9bqn7FVyNUWdt7PRGr5MgyHAEvtvJcdKB6w4bkfO4NJWRBE7KenHlrsSe39Sq/Cvau13kNCHHTDe8mArz7A=="],
 
-    "@rentnerkev/select": ["@rentnerkev/select@6.2.0", "", { "dependencies": { "@rentnerkev/tooltips": "^2.3.0", "@tanstack/react-virtual": "^3.14.26", "lucide-react": "^1.69.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-sgi5VGA659Sq4va6HHAG5omINECgBSuPdx+9j0rR1pt1HzJ4QfX9QSbgrnryUx74oZz0OM/LSZD4YI1LGnUZbA=="],
+    "@rentnerkev/select": ["@rentnerkev/select@6.2.1", "", { "dependencies": { "@rentnerkev/tooltips": "^2.3.3", "@tanstack/react-virtual": "^3.14.26", "lucide-react": "^1.77.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-T0/EDAXMcOzfTsPE4KYGWaj+aZInn1ZQrfnXQ2C/6nS8eniWhO0Flby3axDeCw3KLAWM2nmL0MYtzmrgVaCVsg=="],
 
     "@rentnerkev/tooltips": ["@rentnerkev/tooltips@2.3.2", "", { "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-Vb68WBREE7najB2TZouB9QK51XKr6+K5EOIeqJRm6Fmc/YSLgCuAvZ0tZdWuvAOXVo6aF+MoB+6z8DNfEzYMSA=="],
 
@@ -223,5 +223,9 @@
     "whatwg-mimetype": ["whatwg-mimetype@3.0.0", "", {}, "sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q=="],
 
     "ws": ["ws@8.23.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-wCkmX8QMOrKjgO8HW2WyDbTSGeqkocxgDzS9iR79rEAexty6/2qzilx3Ag8Tqf9ykop3irLKle0MtVn5qjVnoQ=="],
+
+    "@rentnerkev/inputs/@rentnerkev/tooltips": ["@rentnerkev/tooltips@2.3.3", "", { "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-TOxANbayMB9iU97Jh1Pgh8ylDbLAzZQykLQyP/JTkokYTnn9PZnK/CiZYAz7qQymDsXHYSNxhZALpevzVp+uPw=="],
+
+    "@rentnerkev/select/@rentnerkev/tooltips": ["@rentnerkev/tooltips@2.3.3", "", { "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-TOxANbayMB9iU97Jh1Pgh8ylDbLAzZQykLQyP/JTkokYTnn9PZnK/CiZYAz7qQymDsXHYSNxhZALpevzVp+uPw=="],
   }
 }

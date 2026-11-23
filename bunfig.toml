@@ -1,5 +1,14 @@
 [install]
 minimumReleaseAge = 86400
+# Coordinated, verified releases of our own packages can be adopted immediately.
+minimumReleaseAgeExcludes = [
+    "@rentnerkev/calendar",
+    "@rentnerkev/inputs",
+    "@rentnerkev/menu",
+    "@rentnerkev/select",
+    "@rentnerkev/table",
+    "@rentnerkev/tooltips",
+]
 linker = "isolated"
 globalStore = false
 
