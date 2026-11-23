@@ -12,6 +12,7 @@ export interface NativeTableDragDisplay {
 
 export interface NativeTableDragController {
     register: (id: string, element: HTMLTableSectionElement | null) => void
+    setPreviewHost: (element: HTMLDivElement | null) => void
     pointer: (id: string, event: PointerEvent<HTMLButtonElement>) => void
     keyboard: (id: string, event: KeyboardEvent<HTMLButtonElement>) => void
     update: (props: TableReorderProviderProps) => void

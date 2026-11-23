@@ -16,15 +16,32 @@ function scalarLabel(value: unknown): string {
     return ''
 }
 
+const utcDateFormatters = /* @__PURE__ */ new Map<string, Intl.DateTimeFormat>()
+
+function getUtcDateFormatter(locale: TableLocale): Intl.DateTimeFormat {
+    let formatter = utcDateFormatters.get(locale)
+    if (!formatter) {
+        formatter = new Intl.DateTimeFormat(locale, { timeZone: 'UTC' })
+        utcDateFormatters.set(locale, formatter)
+    }
+    return formatter
+}
+
 function dateLabel(value: string | undefined, locale: TableLocale): string {
-    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return ''
+    if (
+        !value ||
+        value.length !== 10 ||
+        value.charCodeAt(4) !== 45 ||
+        value.charCodeAt(7) !== 45
+    )
+        return ''
     const date = new Date(`${value}T00:00:00.000Z`)
     if (
         !Number.isFinite(date.getTime()) ||
         date.toISOString().slice(0, 10) !== value
     )
         return ''
-    return new Intl.DateTimeFormat(locale, { timeZone: 'UTC' }).format(date)
+    return getUtcDateFormatter(locale).format(date)
 }
 
 export function getTableFilterSummary<TData extends RowData>(
@@ -33,10 +50,12 @@ export function getTableFilterSummary<TData extends RowData>(
     locale: TableLocale,
     messages: TableMessages,
 ): string {
-    const summary: string[] = []
     const search = scalarLabel(globalFilter)
+    const filters = table.state.columnFilters
+    if (!search && filters.length === 0) return ''
+    const summary: string[] = []
     if (search) summary.push(`${messages.search}: ${search}`)
-    for (const filter of table.state.columnFilters) {
+    for (const filter of filters) {
         const column = table.getColumn(filter.id)
         if (!column) continue
         const config = column.columnDef.meta?.filter

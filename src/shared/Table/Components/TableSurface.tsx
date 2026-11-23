@@ -29,7 +29,9 @@ export function TableSurface<TData extends RowData>(
                         : undefined
                 }
                 getLabel={(id) => {
-                    const row = props.view.rows.find((item) => item.id === id)
+                    const row =
+                        props.table.getRowModel().rowsById[id] ??
+                        props.view.rows.find((item) => item.id === id)
                     return row
                         ? (props.getRowLabel?.(row.original) ?? row.id)
                         : id

@@ -32,18 +32,20 @@ export function useTableColumnSettingsLogic<TData extends RowData>(
     const generation = useRef(0)
     const busy = useRef(false)
     const previousScope = useRef(scope)
-    const messages = useMemo(
-        () => ({
-            ...columnSettingsMessages[locale],
-            ...Object.fromEntries(
-                Object.entries(overrides ?? {}).filter(
-                    ([, value]) => value !== undefined,
-                ),
-            ),
-        }),
-        [locale, overrides],
-    )
+    const messages = useMemo(() => {
+        const base = columnSettingsMessages[locale]
+        if (!overrides) return base
+        let merged: typeof base | undefined
+        for (const [key, value] of Object.entries(overrides)) {
+            if (value !== undefined) {
+                if (!merged) merged = { ...base }
+                ;(merged as unknown as Record<string, unknown>)[key] = value
+            }
+        }
+        return merged ?? base
+    }, [locale, overrides])
     const rows = draft ? getTableColumnSettings(table, draft) : []
+    const valid = isTableColumnLayoutValid(rows)
     const unavailable =
         Boolean(props.disabled) ||
         persistenceStatus === 'loading' ||
@@ -89,13 +91,7 @@ export function useTableColumnSettingsLogic<TData extends RowData>(
         setError(null)
     }
     async function apply() {
-        if (
-            !draft ||
-            busy.current ||
-            unavailable ||
-            !isTableColumnLayoutValid(rows)
-        )
-            return
+        if (!draft || busy.current || unavailable || !valid) return
         busy.current = true
         const request = ++generation.current
         setSaving(true)
@@ -144,7 +140,7 @@ export function useTableColumnSettingsLogic<TData extends RowData>(
             messages,
             saving,
             error,
-            valid: isTableColumnLayoutValid(rows),
+            valid,
             unavailable,
             storageError:
                 persistenceStatus === 'error' ||
@@ -194,10 +190,11 @@ export function useTableColumnSettingsLogic<TData extends RowData>(
                 }),
             handleWidth: (id, value) =>
                 updateDraft((current) => {
+                    const column = table.getColumn(id)
                     if (
-                        !getTableColumnSettings(table, current).find(
-                            (row) => row.id === id,
-                        )?.canResize
+                        !column ||
+                        column.columns.length > 0 ||
+                        !column.getCanResize()
                     )
                         return current
                     return {

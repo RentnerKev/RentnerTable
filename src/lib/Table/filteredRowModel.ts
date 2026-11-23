@@ -127,13 +127,14 @@ export function createCoordinatedFilteredRowModels() {
         >(
             table: Table<TFeatures, TData>,
         ) => {
-            const native = createFilteredRowModel<TFeatures, TData>()(table)
+            let native = createFilteredRowModel<TFeatures, TData>()(table)
             const current = getProvenance(table)
             const atoms = table.atoms as Atoms_All
             let initialized = false
             let previousModel: RowModel<TFeatures, TData> | undefined
             let previousFilters: unknown
             let previousGlobal: unknown
+            let previousGlobalFn: unknown
             const resets: boolean[] = []
             let resetCurrent = false
             const reset = skipFirstRun(() => {
@@ -156,13 +157,23 @@ export function createCoordinatedFilteredRowModels() {
                     } finally {
                         current.owned = false
                     }
+                    const global = atoms.globalFilter?.get()
+                    const hasGlobal =
+                        global !== undefined && global !== null && global !== ''
                     return [
                         model,
                         atoms.columnFilters?.get(),
-                        atoms.globalFilter?.get(),
+                        global,
+                        hasGlobal
+                            ? (
+                                  table.options as {
+                                      globalFilterFn?: unknown
+                                  }
+                              ).globalFilterFn
+                            : undefined,
                     ] as const
                 },
-                fn: (model, filters, global) => {
+                fn: (model, filters, global, globalFilterFn) => {
                     const unfiltered =
                         !filters?.length &&
                         (global === undefined ||
@@ -178,8 +189,18 @@ export function createCoordinatedFilteredRowModels() {
                         return model
                     }
                     current.available = false
+                    const globalFnChanged =
+                        initialized &&
+                        globalFilterFn !== undefined &&
+                        globalFilterFn !== previousGlobalFn
+                    if (globalFnChanged) {
+                        native = createFilteredRowModel<TFeatures, TData>()(
+                            table,
+                        )
+                    }
                     const recomputes =
                         !initialized ||
+                        globalFnChanged ||
                         model !== previousModel ||
                         filters !== previousFilters ||
                         global !== previousGlobal
@@ -189,6 +210,7 @@ export function createCoordinatedFilteredRowModels() {
                     previousModel = model
                     previousFilters = filters
                     previousGlobal = global
+                    previousGlobalFn = globalFilterFn
                     resets.push(ownsReset)
                     return result
                 },

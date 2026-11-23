@@ -91,26 +91,26 @@
         "react-dom": "^19.0.0"
     },
     "dependencies": {
-        "@rentnerkev/calendar": "^2.9.0",
-        "@rentnerkev/inputs": "^2.8.1",
-        "@rentnerkev/menu": "^1.1.0",
-        "@rentnerkev/select": "^6.1.0",
+        "@rentnerkev/calendar": "^2.10.2",
+        "@rentnerkev/inputs": "^2.8.3",
+        "@rentnerkev/menu": "^1.2.1",
+        "@rentnerkev/select": "^6.2.1",
         "@tanstack/react-store": "^0.11.2",
         "@tanstack/react-table": "^9.3.1",
-        "lucide-react": "^1.73.0"
+        "lucide-react": "^1.77.0"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.14.0",
         "@happy-dom/global-registrator": "^21.0.4",
-        "@playwright/test": "^1.64.1",
+        "@playwright/test": "^1.65.1",
         "@testing-library/react": "^16.3.3",
-        "@testing-library/user-event": "^14.6.8",
-        "@types/bun": "^1.4.4",
+        "@testing-library/user-event": "^14.6.13",
+        "@types/bun": "^1.4.5",
         "@types/node": "^26.6.6",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "happy-dom": "^21.0.4",
-        "oxlint": "^1.91.0",
+        "oxlint": "^1.94.0",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
         "typescript": "^7.0.2"

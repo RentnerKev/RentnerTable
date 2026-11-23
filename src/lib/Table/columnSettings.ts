@@ -23,32 +23,34 @@ export function readTableColumnLayout<TData extends RowData>(
               columnSizing: currentSizing,
           }
     const configuredSizing = state.columnSizing ?? {}
-    const known = new Set(columns.map((column) => column.id))
-    const order = [
-        ...new Set((state.columnOrder ?? []).filter((id) => known.has(id))),
-    ]
-    for (const column of columns)
-        if (!order.includes(column.id)) order.push(column.id)
+    const known = new Set<string>()
+    for (let i = 0; i < columns.length; i += 1) known.add(columns[i]!.id)
+    const seen = new Set<string>()
+    const order: string[] = []
+    const rawOrder = state.columnOrder ?? []
+    for (let i = 0; i < rawOrder.length; i += 1) {
+        const id = rawOrder[i]!
+        if (known.has(id) && !seen.has(id)) {
+            seen.add(id)
+            order.push(id)
+        }
+    }
+    const columnVisibility: Record<string, boolean> = {}
+    const columnSizing: Record<string, number> = {}
+    for (let i = 0; i < columns.length; i += 1) {
+        const column = columns[i]!
+        const id = column.id
+        if (!seen.has(id)) order.push(id)
+        columnVisibility[id] = column.getCanHide()
+            ? state.columnVisibility?.[id] !== false
+            : column.getIsVisible()
+        const sizing = column.getCanResize() ? configuredSizing : currentSizing
+        if (Object.hasOwn(sizing, id)) columnSizing[id] = sizing[id]!
+    }
     return {
         columnOrder: order,
-        columnVisibility: Object.fromEntries(
-            columns.map((column) => [
-                column.id,
-                column.getCanHide()
-                    ? state.columnVisibility?.[column.id] !== false
-                    : column.getIsVisible(),
-            ]),
-        ),
-        columnSizing: Object.fromEntries(
-            columns.flatMap((column) => {
-                const sizing = column.getCanResize()
-                    ? configuredSizing
-                    : currentSizing
-                return Object.hasOwn(sizing, column.id)
-                    ? [[column.id, sizing[column.id]]]
-                    : []
-            }),
-        ),
+        columnVisibility,
+        columnSizing,
     }
 }
 

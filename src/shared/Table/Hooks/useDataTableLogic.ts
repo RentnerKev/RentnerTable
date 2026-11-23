@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { batch } from '@tanstack/react-store'
 import { useTable } from '@tanstack/react-table'
 import type {
     CellData,
@@ -31,6 +32,14 @@ import { useTableStatePersistence } from './useTableStatePersistence.ts'
 import { useSingleRowExpansion } from './useSingleRowExpansion.ts'
 
 const defaultPageSizes = [10, 25, 50, 100] as const
+const defaultResizableColumn = { minSize: 64, maxSize: 2000 }
+const alwaysExpandable = () => true
+const neverExpandable = () => false
+const emptySelectedRows: never[] = []
+const rowSearchColumnIdCache = /* @__PURE__ */ new WeakMap<
+    readonly unknown[],
+    string | undefined
+>()
 
 function isRowSearchColumn<
     TFeatures extends TableFeatures,
@@ -38,17 +47,25 @@ function isRowSearchColumn<
     TValue extends CellData,
 >(column: Column<TFeatures, TData, TValue>) {
     // A record-level predicate only needs one eligible accessor as its entry point.
-    return (
-        column.id ===
-        column.table
-            .getAllLeafColumns()
-            .find(
-                (item) =>
-                    item.accessorFn &&
-                    (!('enableGlobalFilter' in item.columnDef) ||
-                        item.columnDef.enableGlobalFilter !== false),
-            )?.id
-    )
+    const leafColumns = column.table.getAllLeafColumns()
+    let targetId: string | undefined
+    if (rowSearchColumnIdCache.has(leafColumns)) {
+        targetId = rowSearchColumnIdCache.get(leafColumns)
+    } else {
+        for (let i = 0; i < leafColumns.length; i++) {
+            const item = leafColumns[i]!
+            if (
+                item.accessorFn &&
+                (!('enableGlobalFilter' in item.columnDef) ||
+                    item.columnDef.enableGlobalFilter !== false)
+            ) {
+                targetId = item.id
+                break
+            }
+        }
+        rowSearchColumnIdCache.set(leafColumns, targetId)
+    }
+    return column.id === targetId
 }
 
 function getPageSizes(
@@ -117,10 +134,15 @@ export function useDataTableLogic<TData extends RowData>({
         () => getSearchValues && createTableSearchFilter(getSearchValues),
         [getSearchValues],
     )
-    // TanStack keys its filtered model on data and query state, not filter identity.
-    const tableData = useMemo(
-        () => (rowSearchFilter ? [...ordered.state.data] : ordered.state.data),
-        [ordered.state.data, rowSearchFilter],
+    const userDefaultColumn = tableOptions?.defaultColumn
+    const defaultColumn = useMemo(
+        () =>
+            resizableColumns
+                ? userDefaultColumn
+                    ? { ...defaultResizableColumn, ...userDefaultColumn }
+                    : defaultResizableColumn
+                : userDefaultColumn,
+        [resizableColumns, userDefaultColumn],
     )
     const expansion = useSingleRowExpansion({
         expansionMode,
@@ -136,16 +158,15 @@ export function useDataTableLogic<TData extends RowData>({
         columnResizeMode: 'onChange',
         enableColumnResizing: resizableColumns,
         ...tableOptions,
-        defaultColumn: resizableColumns
-            ? { minSize: 64, maxSize: 2000, ...tableOptions?.defaultColumn }
-            : tableOptions?.defaultColumn,
+        defaultColumn,
         features: rentnerTableFeatures,
-        data: tableData,
+        data: ordered.state.data,
         columns: preparedColumns,
         getRowId,
         enableRowSelection: selectable,
         getRowCanExpand:
-            tableOptions?.getRowCanExpand ?? (() => Boolean(renderExpandedRow)),
+            tableOptions?.getRowCanExpand ??
+            (renderExpandedRow ? alwaysExpandable : neverExpandable),
         ...expansion,
         manualPagination,
         initialState: {
@@ -278,7 +299,7 @@ export function useDataTableLogic<TData extends RowData>({
     const selectionEnabled = selectable !== false
     const selectedRows = selectionEnabled
         ? table.getFilteredSelectedRowModel().rows
-        : []
+        : emptySelectedRows
     const view = getTableView(
         table,
         messages,
@@ -295,19 +316,25 @@ export function useDataTableLogic<TData extends RowData>({
             : 0
     const lastRow = view.rows.length > 0 ? firstRow + view.rows.length - 1 : 0
     const handleResetFilters = () => {
-        table.setGlobalFilter('')
-        table.setColumnFilters([])
-        resetPageIfNeeded()
+        batch(() => {
+            table.setGlobalFilter('')
+            table.setColumnFilters([])
+            resetPageIfNeeded()
+        })
     }
     const handleSearch = (value: string) => {
         const previous = globalFilter.get()
-        table.setGlobalFilter(value)
-        if (resetOnQueryChange && !Object.is(previous, value))
-            resetPageIfNeeded()
+        batch(() => {
+            table.setGlobalFilter(value)
+            if (resetOnQueryChange && !Object.is(previous, value))
+                resetPageIfNeeded()
+        })
     }
     const handlePageSize = (value: number) => {
-        table.setPageSize(value)
-        resetPageIfNeeded()
+        batch(() => {
+            table.setPageSize(value)
+            resetPageIfNeeded()
+        })
     }
     return {
         table,

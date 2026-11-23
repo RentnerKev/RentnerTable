@@ -78,12 +78,15 @@ export function TableViewport<TData extends RowData>({
             <table
                 {...tableProps}
                 ref={tableRef}
-                style={{
-                    ...tableProps.style,
-                    ...(sizing.fixed
-                        ? { tableLayout: 'fixed', width: sizing.width }
-                        : {}),
-                }}
+                style={
+                    sizing.fixed
+                        ? {
+                              ...tableProps.style,
+                              tableLayout: 'fixed',
+                              width: sizing.width,
+                          }
+                        : tableProps.style
+                }
                 aria-busy={isLoading || tableProps['aria-busy']}
                 data-rentner-table=""
                 data-size={size}

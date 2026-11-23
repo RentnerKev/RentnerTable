@@ -5,13 +5,15 @@ export function mergeTableClassNames(
     inherited: DataTableClassNames,
     local?: DataTableClassNames,
 ): DataTableClassNames {
-    const result = { ...inherited }
-    for (const key of Object.keys(local ?? {}) as Array<
-        keyof DataTableClassNames
-    >) {
-        if (local?.[key] !== undefined) result[key] = local[key]
+    if (!local || local === inherited) return inherited
+    let result: DataTableClassNames | undefined
+    for (const key of Object.keys(local) as Array<keyof DataTableClassNames>) {
+        const value = local[key]
+        if (value !== undefined && value !== inherited[key]) {
+            ;(result ??= { ...inherited })[key] = value
+        }
     }
-    return result
+    return result ?? inherited
 }
 
 export function getTableSlotClassName(

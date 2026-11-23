@@ -25,21 +25,27 @@ export function getTableSelectOptions<TData extends RowData>(
     if (cached?.model === model) return cached.options
 
     const values = new Set<string>()
-    const addValue = (value: unknown) => {
-        if (typeof value === 'string' && value !== '') values.add(value)
-    }
-    for (const row of model.flatRows) {
-        const value = row.getValue(column.id)
-        if (config.match === 'includes') {
-            if (Array.isArray(value)) value.forEach(addValue)
-        } else {
-            addValue(value)
+    const flatRows = model.flatRows
+    const colId = column.id
+    if (config.match === 'includes') {
+        for (let i = 0; i < flatRows.length; i += 1) {
+            const value = flatRows[i]!.getValue(colId)
+            if (!Array.isArray(value)) continue
+            for (let j = 0; j < value.length; j += 1) {
+                const item = value[j]
+                if (typeof item === 'string' && item !== '') values.add(item)
+            }
+        }
+    } else {
+        for (let i = 0; i < flatRows.length; i += 1) {
+            const value = flatRows[i]!.getValue(colId)
+            if (typeof value === 'string' && value !== '') values.add(value)
         }
     }
 
-    const options = [...values]
-        .toSorted()
-        .map((value) => ({ value, label: value }))
+    const sorted = [...values]
+    sorted.sort()
+    const options = sorted.map((value) => ({ value, label: value }))
     selectOptionsCache.set(column, { model, options })
     return options
 }

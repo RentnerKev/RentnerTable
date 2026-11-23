@@ -3,7 +3,7 @@ import type { RowData } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, Columns3, X } from 'lucide-react'
 import { TableButton } from './TableButton.tsx'
 import { useTableColumnSettingsLogic } from '../Hooks/useTableColumnSettingsLogic.ts'
-import { useTableStyles } from '../Hooks/useTableStyles.ts'
+import { useInheritedTableStyles } from '../Hooks/useTableStyles.ts'
 import type { TableColumnSettingsProps } from '../Types/columnSettings.types.ts'
 
 export function TableColumnSettings<TData extends RowData>(
@@ -14,8 +14,12 @@ export function TableColumnSettings<TData extends RowData>(
         handler,
         refs: { dialog, trigger },
     } = useTableColumnSettingsLogic(props)
-    const { state: styles } = useTableStyles()
+    const styles = useInheritedTableStyles()
     const id = useId()
+    let visibleCount = 0
+    for (let i = 0; i < state.rows.length; i++) {
+        if (state.rows[i]!.visible) visibleCount++
+    }
     return (
         <>
             <TableButton
@@ -89,10 +93,7 @@ export function TableColumnSettings<TData extends RowData>(
                                         state.saving ||
                                         state.unavailable ||
                                         !row.canHide ||
-                                        (row.visible &&
-                                            state.rows.filter(
-                                                (item) => item.visible,
-                                            ).length === 1)
+                                        (row.visible && visibleCount === 1)
                                     }
                                     onChange={(event) =>
                                         handler.handleVisibility(

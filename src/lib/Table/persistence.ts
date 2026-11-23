@@ -37,7 +37,7 @@ function ownValue(value: object, key: string): unknown {
 
 function cloneValue(
     value: unknown,
-    ancestors = new Set<object>(),
+    ancestors?: Set<object>,
 ): TableStateValue | typeof invalid {
     if (
         value === null ||
@@ -48,17 +48,16 @@ function cloneValue(
     }
     if (typeof value === 'number')
         return Number.isFinite(value) ? value : invalid
-    if (typeof value !== 'object' || ancestors.has(value)) return invalid
+    if (typeof value !== 'object') return invalid
+    if (ancestors?.has(value)) return invalid
     if (!Array.isArray(value) && !isPlainRecord(value)) return invalid
-    ancestors.add(value)
+    const seen = ancestors ?? new Set<object>()
+    seen.add(value)
     try {
         if (Array.isArray(value)) {
             const result: TableStateValue[] = []
             for (let index = 0; index < value.length; index++) {
-                const entry = cloneValue(
-                    ownValue(value, String(index)),
-                    ancestors,
-                )
+                const entry = cloneValue(ownValue(value, String(index)), seen)
                 if (entry === invalid) return invalid
                 result.push(entry)
             }
@@ -70,13 +69,13 @@ function cloneValue(
             const own = ownValue(value, key)
             // Match JSON object semantics for optional fields such as an open date range.
             if (own === undefined) continue
-            const entry = cloneValue(own, ancestors)
+            const entry = cloneValue(own, seen)
             if (entry === invalid) return invalid
             result[key] = entry
         }
         return result
     } finally {
-        ancestors.delete(value)
+        seen.delete(value)
     }
 }
 
@@ -148,14 +147,15 @@ function normalizeField(
         case 'rowOrder': {
             if (!Array.isArray(value)) return invalid
             const result: string[] = []
+            const seen = field === 'columnOrder' ? new Set<string>() : undefined
             for (let index = 0; index < value.length; index++) {
                 const entry = ownValue(value, String(index))
                 if (typeof entry !== 'string') return invalid
-                if (
-                    field === 'columnOrder' &&
-                    (!entry || !isSafeKey(entry) || result.includes(entry))
-                )
-                    return invalid
+                if (seen) {
+                    if (!entry || !isSafeKey(entry) || seen.has(entry))
+                        return invalid
+                    seen.add(entry)
+                }
                 result.push(entry)
             }
             return result
